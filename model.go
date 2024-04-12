@@ -1,6 +1,10 @@
 package categories
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type tblcategories struct {
 	Id                 int
@@ -52,4 +56,50 @@ type CategoryCreate struct {
 	Description  string
 	ImagePath    string
 	ParentId     int
+	CreatedBy    int
+}
+
+type CategoryModel struct{}
+
+var C CategoryModel
+
+// Parent Category List
+func (categories CategoryModel) GetCategoryList(offset int, limit int, filter Filter, DB *gorm.DB) (category []tblcategories, count int64, err error) {
+
+	var categorycount int64
+
+	query := DB.Table("tbl_categories").Where("is_deleted = 0 and parent_id=0").Order("id desc")
+
+	if filter.Keyword != "" {
+
+		query = query.Where("LOWER(TRIM(category_name)) ILIKE LOWER(TRIM(?))", "%"+filter.Keyword+"%")
+	}
+
+	if limit != 0 {
+
+		query.Limit(limit).Offset(offset).Find(&categories)
+
+		return category, categorycount, nil
+
+	}
+
+	query.Find(&categories).Count(&categorycount)
+
+	if query.Error != nil {
+
+		return []tblcategories{}, 0, query.Error
+	}
+
+	return category, categorycount, nil
+
+}
+
+func (categories CategoryModel) CreateCategory(category tblcategories, DB *gorm.DB) error {
+
+	if err := DB.Table("tbl_categories").Create(&category).Error; err != nil {
+
+		return err
+	}
+
+	return nil
 }

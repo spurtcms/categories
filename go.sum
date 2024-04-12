@@ -1,6 +1,14 @@
+github.com/golang-jwt/jwt v3.2.2+incompatible h1:IfV12K8xAKAnZqdXVzCZ+TOjboZ2keLg81eXfW3O+oY=
+github.com/golang-jwt/jwt v3.2.2+incompatible/go.mod h1:8pz2t5EyA70fFQQSrl6XZXzqecmYZeUEB8OUGHkxJ+I=
 github.com/jinzhu/inflection v1.0.0 h1:K317FqzuhWc8YvSVlFMCCUb36O/S9MCKRDI7QkRKD/E=
 github.com/jinzhu/inflection v1.0.0/go.mod h1:h+uFLlag+Qp1Va5pdKtLDYj+kHp5pxUVkryuEj+Srlc=
 github.com/jinzhu/now v1.1.5 h1:/o9tlHleP7gOFmsnYNz3RGnqzefHA47wQpKrrdTIwXQ=
 github.com/jinzhu/now v1.1.5/go.mod h1:d3SSVoowX0Lcu0IBviAWJpolVfI5UJVZZ7cO71lE/z8=
+github.com/spurtcms/auth v0.0.0-20240410083610-b6343b5fc023 h1:ndufJ/Jv77nCK5wS35uPpEAkrLrvAVv/JTG9snApks0=
+github.com/spurtcms/auth v0.0.0-20240410083610-b6343b5fc023/go.mod h1:twSrHwCvx8mSOtS75Vcjoo4jLNX3jIf7NLadvZH932c=
+github.com/spurtcms/team-roles v0.0.0-20240412124411-68306085d01b h1:mrShlDGupqPB0KOdiy0Bq462ZwgTHkrm5QBiY/NeI1I=
+github.com/spurtcms/team-roles v0.0.0-20240412124411-68306085d01b/go.mod h1:5HOK30Lr10UQ1HLmXcPaluBRPCLUcYgQg31vBQYKoRQ=
+golang.org/x/crypto v0.21.0 h1:X31++rzVUdKhX5sWmSOFZxx8UW/ldWx55cbf08iNAMA=
+golang.org/x/crypto v0.21.0/go.mod h1:0BP7YvVV9gBbVKyeTG0Gyn+gZm94bibOW5BjDEYAOMs=
 gorm.io/gorm v1.25.9 h1:wct0gxZIELDk8+ZqF/MVnHLkA1rvYlBWUMv2EdsK1g8=
 gorm.io/gorm v1.25.9/go.mod h1:hbnx/Oo0ChWMn1BIhpy1oYozzpM15i4YPuHDmfYtwg8=
