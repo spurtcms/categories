@@ -13,9 +13,9 @@ func (cat *Categories) CategoryGroupList(limit int, offset int, filter Filter) (
 		return []tblcategories{}, 0, AuthError
 	}
 
-	_, Total_categories, _ := C.GetCategoryList(0, 0, filter, cat.DB)
+	_, Total_categories, _ := Categorymodel.CategoryGroupList(0, 0, filter, cat.DB)
 
-	categorygrplist, _, cerr := C.GetCategoryList(offset, limit, filter, cat.DB)
+	categorygrplist, _, cerr := Categorymodel.CategoryGroupList(offset, limit, filter, cat.DB)
 
 	if cerr != nil {
 
@@ -28,6 +28,11 @@ func (cat *Categories) CategoryGroupList(limit int, offset int, filter Filter) (
 
 /*Add Category Group*/
 func (cat *Categories) CreateCategoryGroup(req CategoryCreate) error {
+
+	if AuthError := AuthandPermission(cat); AuthError != nil {
+
+		return AuthError
+	}
 
 	if req.CategoryName == "" {
 
@@ -48,7 +53,84 @@ func (cat *Categories) CreateCategoryGroup(req CategoryCreate) error {
 
 	category.CreatedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
 
-	err := C.CreateCategory(category, cat.DB)
+	err := Categorymodel.CreateCategory(&category, cat.DB)
+
+	if err != nil {
+
+		return err
+	}
+
+	return nil
+
+}
+
+/*UpdateCategoryGroup*/
+func (cat *Categories) UpdateCategoryGroup(req CategoryCreate) error {
+
+	if AuthError := AuthandPermission(cat); AuthError != nil {
+
+		return AuthError
+	}
+
+	if req.Id <= 0 || req.CategoryName == "" {
+
+		return ErrorCategoryName
+	}
+	var category tblcategories
+
+	category.Id = req.Id
+
+	category.CategoryName = req.CategoryName
+
+	category.Description = req.Description
+
+	category.CategorySlug = strings.ToLower(req.CategoryName)
+
+	category.ModifiedBy = req.ModifiedBy
+
+	category.ModifiedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
+
+	err := Categorymodel.UpdateCategory(&category, cat.DB)
+
+	if err != nil {
+
+		return err
+	}
+
+	return nil
+
+}
+
+/*DeleteCategoryGroup*/
+func (cat *Categories) DeleteCategoryGroup(Categoryid int, modifiedby int) error {
+
+	if AuthError := AuthandPermission(cat); AuthError != nil {
+
+		return AuthError
+	}
+
+	GetData, _ := Categorymodel.GetCategoryTree(Categoryid, cat.DB)
+
+	var individualid []int
+
+	for _, GetParent := range GetData {
+
+		indivi := GetParent.Id
+
+		individualid = append(individualid, indivi)
+	}
+
+	spacecategory := individualid[0]
+
+	var category tblcategories
+
+	category.DeletedBy = modifiedby
+
+	category.DeletedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
+
+	category.IsDeleted = 1
+
+	err := Categorymodel.DeleteallCategoryById(&category, individualid, spacecategory, cat.DB)
 
 	if err != nil {
 

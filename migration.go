@@ -25,7 +25,15 @@ type TblCategories struct {
 // MigrateTable creates this package related tables in your database
 func MigrateTables(db *gorm.DB) {
 
-	db.AutoMigrate(
+	if err := db.AutoMigrate(
+
 		&TblCategories{},
-	)
+
+	); err != nil {
+
+		panic(err)
+	}
+
+	db.Exec(`INSERT INTO public.tbl_categories(id, category_name, category_slug, created_on, created_by,is_deleted, parent_id, description)	VALUES (1, 'Default Category', 'default_category', '2024-03-04 11:22:03', 1, 0, 0, 'Default_Category'),(2, 'Default1', 'default1', '2024-03-04 11:22:03', 1, 0, 1, 'Default1');`)
+
 }
