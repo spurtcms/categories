@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type tblcategories struct {
+type Tblcategories struct {
 	Id                 int
 	CategoryName       string
 	CategorySlug       string
@@ -66,7 +66,7 @@ type CategoriesListReq struct {
 	Offset          int
 	Keyword         string
 	Category        string
-	ParentId        int  //pass parentid get all child categories
+	ParentId        int  //get particular parentid below all child categories
 	CategoryGroupId int  //get particular group categories only
 	HirerachyLevel  int  //how many level of children you want default zero get all
 	OnlyCategories  bool //if you want categories only without group enable true
@@ -77,7 +77,7 @@ type CategoryModel struct{}
 var Categorymodel CategoryModel
 
 // Parent Category List
-func (categories CategoryModel) CategoryGroupList(offset int, limit int, filter Filter, DB *gorm.DB) (category []tblcategories, count int64, err error) {
+func (categories CategoryModel) CategoryGroupList(offset int, limit int, filter Filter, DB *gorm.DB) (category []Tblcategories, count int64, err error) {
 
 	var categorycount int64
 
@@ -100,14 +100,14 @@ func (categories CategoryModel) CategoryGroupList(offset int, limit int, filter 
 
 	if query.Error != nil {
 
-		return []tblcategories{}, 0, query.Error
+		return []Tblcategories{}, 0, query.Error
 	}
 
 	return category, categorycount, nil
 
 }
 
-func (categories CategoryModel) CreateCategory(category *tblcategories, DB *gorm.DB) error {
+func (categories CategoryModel) CreateCategory(category *Tblcategories, DB *gorm.DB) error {
 
 	if err := DB.Table("tbl_categories").Create(&category).Error; err != nil {
 
@@ -118,7 +118,7 @@ func (categories CategoryModel) CreateCategory(category *tblcategories, DB *gorm
 }
 
 // Update Children list
-func (categories CategoryModel) UpdateCategory(category *tblcategories, DB *gorm.DB) error {
+func (categories CategoryModel) UpdateCategory(category *Tblcategories, DB *gorm.DB) error {
 
 	if category.ParentId == 0 && category.ImagePath == "" {
 
@@ -137,7 +137,7 @@ func (categories CategoryModel) UpdateCategory(category *tblcategories, DB *gorm
 }
 
 // Children Category List
-func (cate CategoryModel) GetCategoryList(categ CategoriesListReq, flag int, DB *gorm.DB) (categorylist []tblcategories, count int64) {
+func (cate CategoryModel) GetCategoryList(categ CategoriesListReq, flag int, DB *gorm.DB) (categorylist []Tblcategories, count int64) {
 
 	var categorycount int64
 
@@ -236,17 +236,17 @@ func (cate CategoryModel) GetCategoryList(categ CategoriesListReq, flag int, DB 
 }
 
 /*getCategory Details*/
-func (cate CategoryModel) GetCategoryById(categoryId int, DB *gorm.DB) (categorylist tblcategories, err error) {
+func (cate CategoryModel) GetCategoryById(categoryId int, DB *gorm.DB) (categorylist Tblcategories, err error) {
 
 	if err := DB.Table("tbl_categories").Where("is_deleted=0 and id=?", categoryId).First(&categorylist).Error; err != nil {
 
-		return tblcategories{}, err
+		return Tblcategories{}, err
 	}
 	return categorylist, nil
 }
 
-func (cate CategoryModel) GetCategoryTree(categoryID int, DB *gorm.DB) ([]tblcategories, error) {
-	var categories []tblcategories
+func (cate CategoryModel) GetCategoryTree(categoryID int, DB *gorm.DB) ([]Tblcategories, error) {
+	var categories []Tblcategories
 	err := DB.Raw(`
 		WITH RECURSIVE cat_tree AS (
 			SELECT id, 	CATEGORY_NAME,
@@ -277,15 +277,15 @@ func (cate CategoryModel) GetCategoryTree(categoryID int, DB *gorm.DB) ([]tblcat
 	return categories, nil
 }
 
-func (cate CategoryModel) DeleteallCategoryById(category *tblcategories, categoryId []int, spacecatid int, DB *gorm.DB) error {
+func (cate CategoryModel) DeleteallCategoryById(category *Tblcategories, categoryId []int, spacecatid int, DB *gorm.DB) error {
 
-	if err := DB.Table("tbl_spaces").Where("page_category_id", spacecatid).Updates(tblcategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
+	if err := DB.Table("tbl_spaces").Where("page_category_id", spacecatid).Updates(Tblcategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
 
 		return err
 
 	}
 
-	if err := DB.Table("tbl_categories").Where("id in(?)", categoryId).Updates(tblcategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
+	if err := DB.Table("tbl_categories").Where("id in(?)", categoryId).Updates(Tblcategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
 
 		return err
 
@@ -294,9 +294,9 @@ func (cate CategoryModel) DeleteallCategoryById(category *tblcategories, categor
 	return nil
 }
 
-func (cate CategoryModel) DeleteCategoryById(category *tblcategories, categoryId int, DB *gorm.DB) error {
+func (cate CategoryModel) DeleteCategoryById(category *Tblcategories, categoryId int, DB *gorm.DB) error {
 
-	if err := DB.Table("tbl_categories").Where("id=?", categoryId).Updates(TblCategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
+	if err := DB.Table("tbl_categories").Where("id=?", categoryId).Updates(Tblcategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
 
 		return err
 
@@ -306,18 +306,18 @@ func (cate CategoryModel) DeleteCategoryById(category *tblcategories, categoryId
 }
 
 // Get Childern list
-func (cate CategoryModel) GetCategoryDetails(id int, DB *gorm.DB) (category tblcategories, err error) {
+func (cate CategoryModel) GetCategoryDetails(id int, DB *gorm.DB) (category Tblcategories, err error) {
 
 	if err := DB.Table("tbl_categories").Where("id=?", id).First(&category).Error; err != nil {
 
-		return tblcategories{}, err
+		return Tblcategories{}, err
 	}
 	return category, nil
 
 }
 
 // Check category group name already exists
-func (cate CategoryModel) CheckCategoryGroupName(category tblcategories, userid int, name string, DB *gorm.DB) error {
+func (cate CategoryModel) CheckCategoryGroupName(category Tblcategories, userid int, name string, DB *gorm.DB) error {
 
 	if userid == 0 {
 
@@ -336,29 +336,29 @@ func (cate CategoryModel) CheckCategoryGroupName(category tblcategories, userid 
 	return nil
 }
 
-func (cate CategoryModel) GetAllParentCategory(DB *gorm.DB) (categories []tblcategories, err error) {
+func (cate CategoryModel) GetAllParentCategory(DB *gorm.DB) (categories []Tblcategories, err error) {
 
 	if err := DB.Table("tbl_categories").Where("parent_id=0 and is_deleted=0").Find(&categories).Error; err != nil {
 
-		return []tblcategories{}, err
+		return []Tblcategories{}, err
 	}
 	return categories, nil
 }
 
 // Check sub category name already exists
-func (cate CategoryModel) CheckSubCategoryName(categoryid []int, currentid int, name string, DB *gorm.DB) (category tblcategories, err error) {
+func (cate CategoryModel) CheckSubCategoryName(categoryid []int, currentid int, name string, DB *gorm.DB) (category Tblcategories, err error) {
 
 	if len(categoryid) == 0 {
 
 		if err := DB.Table("tbl_categories").Where("LOWER(TRIM(category_name))=LOWER(TRIM(?)) and is_deleted=0", name).First(&category).Error; err != nil {
 
-			return tblcategories{}, err
+			return Tblcategories{}, err
 		}
 	} else {
 
 		if err := DB.Table("tbl_categories").Where("LOWER(TRIM(category_name))=LOWER(TRIM(?)) and id in (?) and id not in (?) and is_deleted=0", name, categoryid, currentid).First(&category).Error; err != nil {
 
-			return tblcategories{}, err
+			return Tblcategories{}, err
 		}
 	}
 
@@ -377,3 +377,4 @@ func (cate CategoryModel) UpdateImagePath(Imagepath string, DB *gorm.DB) error {
 	return nil
 
 }
+

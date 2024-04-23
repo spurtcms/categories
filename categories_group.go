@@ -6,11 +6,11 @@ import (
 )
 
 /*List Category Group*/
-func (cat *Categories) CategoryGroupList(limit int, offset int, filter Filter) (Categorylist []tblcategories, categorycount int64, err error) {
+func (cat *Categories) CategoryGroupList(limit int, offset int, filter Filter) (Categorylist []Tblcategories, categorycount int64, err error) {
 
 	if AuthError := AuthandPermission(cat); AuthError != nil {
 
-		return []tblcategories{}, 0, AuthError
+		return []Tblcategories{}, 0, AuthError
 	}
 
 	_, Total_categories, _ := Categorymodel.CategoryGroupList(0, 0, filter, cat.DB)
@@ -19,7 +19,7 @@ func (cat *Categories) CategoryGroupList(limit int, offset int, filter Filter) (
 
 	if cerr != nil {
 
-		return []tblcategories{}, 0, cerr
+		return []Tblcategories{}, 0, cerr
 	}
 
 	return categorygrplist, Total_categories, nil
@@ -39,7 +39,7 @@ func (cat *Categories) CreateCategoryGroup(req CategoryCreate) error {
 		return ErrorCategoryName
 	}
 
-	var category tblcategories
+	var category Tblcategories
 
 	category.CategoryName = req.CategoryName
 
@@ -76,7 +76,7 @@ func (cat *Categories) UpdateCategoryGroup(req CategoryCreate) error {
 
 		return ErrorCategoryName
 	}
-	var category tblcategories
+	var category Tblcategories
 
 	category.Id = req.Id
 
@@ -122,7 +122,7 @@ func (cat *Categories) DeleteCategoryGroup(Categoryid int, modifiedby int) error
 
 	spacecategory := individualid[0]
 
-	var category tblcategories
+	var category Tblcategories
 
 	category.DeletedBy = modifiedby
 

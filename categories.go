@@ -21,7 +21,7 @@ func CategoriesSetup(config Config) *Categories {
 }
 
 /*ListCategory*/
-func (cate *Categories) ListCategory(catlist CategoriesListReq) (tblcat []tblcategories, categories []tblcategories, parentcategory tblcategories, categorycount int64, err error) {
+func (cate *Categories) ListCategory(catlist CategoriesListReq) (tblcat []Tblcategories, categories []Tblcategories, parentcategory Tblcategories, categorycount int64, err error) {
 
 	if Autherr := AuthandPermission(cate); Autherr != nil {
 
@@ -167,7 +167,7 @@ func (cate *Categories) ListCategory(catlist CategoriesListReq) (tblcat []tblcat
 		FinalModalCategoryList = append(FinalModalCategoryList, infinalarray)
 	}
 
-	var FinalModalCategoriesList []tblcategories
+	var FinalModalCategoriesList []Tblcategories
 
 	for index, val := range childcategorys {
 
@@ -187,7 +187,7 @@ func (cate *Categories) ListCategory(catlist CategoriesListReq) (tblcat []tblcat
 		}
 		FinalModalCategoriesList = append(FinalModalCategoriesList, finalcat)
 	}
-	var FinalCategoriesList []tblcategories
+	var FinalCategoriesList []Tblcategories
 
 	for index, val := range childcategory {
 
@@ -224,7 +224,7 @@ func (cate *Categories) AddCategory(req CategoryCreate) error {
 		return ErrorCategoryName
 	}
 
-	var category tblcategories
+	var category Tblcategories
 
 	category.CategoryName = req.CategoryName
 
@@ -264,7 +264,7 @@ func (cate *Categories) UpdateSubCategory(req CategoryCreate) error {
 		return ErrorCategoryName
 	}
 
-	var category tblcategories
+	var category Tblcategories
 
 	category.CategoryName = req.CategoryName
 
@@ -303,7 +303,7 @@ func (cate *Categories) DeleteSubCategory(categoryid int, modifiedby int) error 
 		return Autherr
 	}
 
-	var category tblcategories
+	var category Tblcategories
 
 	category.DeletedBy = modifiedby
 
@@ -323,18 +323,18 @@ func (cate *Categories) DeleteSubCategory(categoryid int, modifiedby int) error 
 }
 
 // Get Sub Category List
-func (cate *Categories) GetSubCategoryDetails(categoryid int) (categorys tblcategories, err error) {
+func (cate *Categories) GetSubCategoryDetails(categoryid int) (categorys Tblcategories, err error) {
 
 	if Autherr := AuthandPermission(cate); Autherr != nil {
 
-		return tblcategories{}, Autherr
+		return Tblcategories{}, Autherr
 	}
 
 	category, err := Categorymodel.GetCategoryDetails(categoryid, cate.DB)
 
 	if err != nil {
 
-		return tblcategories{}, err
+		return Tblcategories{}, err
 	}
 
 	return category, nil
