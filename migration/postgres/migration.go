@@ -1,4 +1,4 @@
-package categories
+package postgres
 
 import (
 	"time"
@@ -23,12 +23,11 @@ type TblCategories struct {
 }
 
 // MigrateTable creates this package related tables in your database
-func MigrateTables(db *gorm.DB) {
+func MigrationTables(db *gorm.DB) {
 
 	if err := db.AutoMigrate(
 
 		&TblCategories{},
-
 	); err != nil {
 
 		panic(err)

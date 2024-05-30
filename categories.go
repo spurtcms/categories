@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/spurtcms/categories/migration"
 )
 
 func CategoriesSetup(config Config) *Categories {
 
-	MigrateTables(config.DB)
+	migration.AutoMigration(config.DB, config.DataBaseType)
 
 	return &Categories{
 		DB:               config.DB,
