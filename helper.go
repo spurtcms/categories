@@ -3,7 +3,7 @@ package categories
 // Check category name already exists
 func (cate *Categories) CheckCategroyGroupName(id int, name string) (bool, error) {
 
-	var category Tblcategories
+	var category TblCategories
 
 	err := Categorymodel.CheckCategoryGroupName(category, id, name, cate.DB)
 
@@ -153,4 +153,15 @@ func (cate *Categories) CheckSubCategroyName(id []int, Currentcategoryid int, na
 	}
 
 	return true, nil
+}
+
+func contains(slice []int, item int) (check bool, index int) {
+
+	for i, val := range slice {
+		if val == item {
+			return true, i
+		}
+	}
+
+	return false, -1
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/spurtcms/categories/migration"
+	"gorm.io/gorm"
 )
 
 func CategoriesSetup(config Config) *Categories {
@@ -23,7 +24,7 @@ func CategoriesSetup(config Config) *Categories {
 }
 
 /*ListCategory*/
-func (cate *Categories) ListCategory(catlist CategoriesListReq) (tblcat []Tblcategories, categories []Tblcategories, parentcategory Tblcategories, categorycount int64, err error) {
+func (cate *Categories) ListCategory(catlist CategoriesListReq) (tblcat []TblCategories, categories []TblCategories, parentcategory TblCategories, categorycount int64, err error) {
 
 	if Autherr := AuthandPermission(cate); Autherr != nil {
 
@@ -169,7 +170,7 @@ func (cate *Categories) ListCategory(catlist CategoriesListReq) (tblcat []Tblcat
 		FinalModalCategoryList = append(FinalModalCategoryList, infinalarray)
 	}
 
-	var FinalModalCategoriesList []Tblcategories
+	var FinalModalCategoriesList []TblCategories
 
 	for index, val := range childcategorys {
 
@@ -189,7 +190,7 @@ func (cate *Categories) ListCategory(catlist CategoriesListReq) (tblcat []Tblcat
 		}
 		FinalModalCategoriesList = append(FinalModalCategoriesList, finalcat)
 	}
-	var FinalCategoriesList []Tblcategories
+	var FinalCategoriesList []TblCategories
 
 	for index, val := range childcategory {
 
@@ -226,7 +227,7 @@ func (cate *Categories) AddCategory(req CategoryCreate) error {
 		return ErrorCategoryName
 	}
 
-	var category Tblcategories
+	var category TblCategories
 
 	category.CategoryName = req.CategoryName
 
@@ -266,7 +267,7 @@ func (cate *Categories) UpdateSubCategory(req CategoryCreate) error {
 		return ErrorCategoryName
 	}
 
-	var category Tblcategories
+	var category TblCategories
 
 	category.CategoryName = req.CategoryName
 
@@ -305,7 +306,7 @@ func (cate *Categories) DeleteSubCategory(categoryid int, modifiedby int) error 
 		return Autherr
 	}
 
-	var category Tblcategories
+	var category TblCategories
 
 	category.DeletedBy = modifiedby
 
@@ -325,18 +326,18 @@ func (cate *Categories) DeleteSubCategory(categoryid int, modifiedby int) error 
 }
 
 // Get Sub Category List
-func (cate *Categories) GetSubCategoryDetails(categoryid int) (categorys Tblcategories, err error) {
+func (cate *Categories) GetSubCategoryDetails(categoryid int) (categorys TblCategories, err error) {
 
 	if Autherr := AuthandPermission(cate); Autherr != nil {
 
-		return Tblcategories{}, Autherr
+		return TblCategories{}, Autherr
 	}
 
 	category, err := Categorymodel.GetCategoryDetails(categoryid, cate.DB)
 
 	if err != nil {
 
-		return Tblcategories{}, err
+		return TblCategories{}, err
 	}
 
 	return category, nil
@@ -360,4 +361,124 @@ func (cate *Categories) UpdateImagePath(ImagePath string) error {
 
 	return nil
 
+}
+
+// multiSelect channel delete category ids
+func (cate CategoryModel) MultiDeleteChannelCategoryids(channelCategory *TblChannelCategorie, channelIds [][]int, rowId []string, categoryIds []int, DB *gorm.DB) error {
+
+	for _, categoryId := range categoryIds {
+		for i, channelId := range channelIds {
+			for _, id := range channelId {
+				if id == categoryId {
+					result := DB.Debug().Where("id = ?", rowId[i]).Delete(&TblChannelCategorie{})
+					if result.Error != nil {
+						return result.Error
+					}
+					break
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// delete entry category ids
+
+func (cate CategoryModel) DeleteEntryCategoryids(channelCategory *TblChannelEntrie, entryId string, rowId int, DB *gorm.DB) error {
+
+	result := DB.Table("tbl_channel_entries").Where("id = ?", rowId).UpdateColumn("categories_id", entryId)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
+}
+
+func (cate CategoryModel) DeleteCategoryByIds(category *TblCategories, categoryId []int, DB *gorm.DB) error {
+
+	if err := DB.Table("tbl_categories").Where("id in (?)", categoryId).Updates(TblCategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
+
+		return err
+
+	}
+
+	return nil
+}
+
+// multiselect get entry category Id function
+
+func (cate CategoryModel) MultiGetEntryCategoryids(entryCategory *TblChannelEntrie, channelId []int, DB *gorm.DB) (entries []string, categoryRowIds []string, entryRowIds []string, err error) {
+
+	var entryId []string
+	var categoryRowId []string
+	var entryrowId []string
+
+	result := DB.Raw(`with recursive categories as
+					(
+						select id, category_name, category_slug, parent_id, is_deleted
+						from tbl_categories 
+						where id in (?) 
+						union all
+						select TC.id,TC.category_name,TC.category_slug,TC.parent_id,TC.is_deleted
+						from categories C 
+						join tbl_categories TC on C.id = TC.parent_id
+					)
+					select id from categories`, channelId).Scan(&categoryRowId)
+	if result.Error != nil {
+		return
+	}
+
+	result = DB.Debug().Table("tbl_channel_entries").Pluck("categories_id", &entryId)
+	if result.Error != nil {
+		return
+	}
+
+	result = DB.Debug().Table("tbl_channel_entries").Pluck("id", &entryrowId)
+	if result.Error != nil {
+		return
+	}
+
+	return entryId, categoryRowId, entryrowId, nil
+}
+
+func (cate CategoryModel) GetChannelCategoryids(channelcategory *TblChannelCategorie, DB *gorm.DB) (categories []string, rowIds []string, err error) {
+
+	// var categoryId string
+	var categoryId []string
+	var rowId []string
+
+	result := DB.Debug().Table("tbl_channel_categories").Pluck("category_id", &categoryId)
+	if result.Error != nil {
+		return
+	}
+
+	result = DB.Debug().Table("tbl_channel_categories").Pluck("id", &rowId)
+	if result.Error != nil {
+		return
+	}
+
+	return categoryId, rowId, nil
+
+}
+
+// delete all categories
+func (cate CategoryModel) DeleteallCategoryByIds(category *TblCategories, categoryId []int, spacecatid []int, DB *gorm.DB) error {
+
+	fmt.Println(spacecatid)
+
+	if err := DB.Debug().Table("tbl_spaces").Where("page_category_id in (?)", spacecatid).Updates(TblCategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
+
+		fmt.Println(err)
+		// return err
+
+	}
+
+	if err := DB.Debug().Table("tbl_categories").Where("id in(?)", categoryId).Updates(TblCategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
+
+		return err
+
+	}
+
+	return nil
 }

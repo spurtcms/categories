@@ -22,6 +22,14 @@ type TblCategories struct {
 	DeletedBy    int       `gorm:"type:int;DEFAULT:NULL;type:int"`
 }
 
+type TblChannelCategorie struct {
+	Id         int       `gorm:"primaryKey;auto_increment"`
+	ChannelId  int       `gorm:"type:int"`
+	CategoryId string    `gorm:"type:varchar(255)"`
+	CreatedAt  int       `gorm:"type:int"`
+	CreatedOn  time.Time `gorm:"type:datetime"`
+}
+
 
 // MigrateTable creates this package related tables in your database
 func MigrationTables(db *gorm.DB) {
