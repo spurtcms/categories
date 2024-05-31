@@ -133,13 +133,13 @@ func (categories CategoryModel) CategoryGroupList(offset int, limit int, filter 
 
 	if limit != 0 {
 
-		query.Limit(limit).Offset(offset).Find(&categories)
+		query.Limit(limit).Offset(offset).Find(&category)
 
 		return category, categorycount, nil
 
 	}
 
-	query.Find(&categories).Count(&categorycount)
+	query.Find(&category).Count(&categorycount)
 
 	if query.Error != nil {
 
@@ -292,21 +292,21 @@ func (cate CategoryModel) GetCategoryTree(categoryID int, DB *gorm.DB) ([]TblCat
 	var categories []TblCategories
 	err := DB.Raw(`
 		WITH RECURSIVE cat_tree AS (
-			SELECT id, 	CATEGORY_NAME,
-			CATEGORY_SLUG,
-			PARENT_ID,
-			CREATED_ON,
-			MODIFIED_ON,
-			IS_DELETED
+			SELECT id, 	category_name,
+			category_slug,
+			parent_id,
+			created_on,
+			modified_on,
+			is_deleted
 			FROM tbl_categories
 			WHERE id = ?
 			UNION ALL
-			SELECT cat.id, CAT.CATEGORY_NAME,
-			CAT.CATEGORY_SLUG,
-			CAT.PARENT_ID,
-			CAT.CREATED_ON,
-			CAT.MODIFIED_ON,
-			CAT.IS_DELETED
+			SELECT cat.id, cat.category_name,
+			cat.category_slug,
+			cat.parent_id,
+			cat.created_on,
+			cat.modified_on,
+			cat.is_deleted
 			FROM tbl_categories AS cat
 			JOIN cat_tree ON cat.parent_id = cat_tree.id
 		)
@@ -418,5 +418,51 @@ func (cate CategoryModel) UpdateImagePath(Imagepath string, DB *gorm.DB) error {
 	}
 
 	return nil
+
+}
+
+
+// Children Category List
+func (cate CategoryModel) GetSubCategoryList(categories *[]TblCategories, offset int, limit int, filter Filter, parent_id int, flag int, DB *gorm.DB) (categorylist *[]TblCategories, count int64) {
+
+	var categorycount int64
+
+	res := `WITH RECURSIVE cat_tree AS (
+		SELECT id, category_name, category_slug,image_path, parent_id,created_on,modified_on,is_deleted
+		FROM tbl_categories
+		WHERE id = ?
+		UNION ALL
+		SELECT cat.id, cat.category_name, cat.category_slug, cat.image_path ,cat.parent_id,cat.created_on,cat.modified_on,
+		cat.is_deleted
+		FROM tbl_categories AS cat
+		JOIN cat_tree ON cat.parent_id = cat_tree.id )`
+
+	query := DB
+
+	if filter.Keyword != "" {
+
+		if limit == 0 {
+			query.Raw(` `+res+` select count(*) from cat_tree where is_deleted = 0 and LOWER(TRIM(category_name)) ILIKE LOWER(TRIM(?)) group by cat_tree.id `, parent_id, "%"+filter.Keyword+"%").Count(&categorycount)
+
+			return categories, categorycount
+		}
+		query = query.Raw(` `+res+` select * from cat_tree where is_deleted = 0 and LOWER(TRIM(category_name)) ILIKE LOWER(TRIM(?)) limit(?) offset(?) `, parent_id, "%"+filter.Keyword+"%", limit, offset)
+	} else if flag == 0 {
+		query = query.Raw(``+res+` SELECT * FROM cat_tree where is_deleted = 0 and id not in (?) order by id desc limit(?) offset(?) `, parent_id, parent_id, limit, offset)
+	} else if flag == 1 {
+		query = query.Raw(``+res+` SELECT * FROM cat_tree where is_deleted = 0 order by id desc `, parent_id)
+	}
+	if limit != 0 {
+
+		query.Find(&categories)
+
+		return categories, categorycount
+
+	} else {
+
+		DB.Raw(` `+res+` SELECT count(*) FROM cat_tree where is_deleted = 0 and id not in (?)  group by cat_tree.id order by id desc`, parent_id, parent_id).Count(&categorycount)
+
+		return categories, categorycount
+	}
 
 }

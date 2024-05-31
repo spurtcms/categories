@@ -16,7 +16,7 @@ func AuthandPermission(category *Categories) error {
 		return ErrorAuth
 	}
 	//check permission enable if enabled, use team-role pkg otherwise it will return error
-	if category.PermissionEnable && !category.Permissions.PermissionFlg {
+	if category.PermissionEnable && !category.Auth.PermissionFlg {
 
 		return ErrorPermission
 

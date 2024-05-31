@@ -24,14 +24,14 @@ func CategoriesSetup(config Config) *Categories {
 }
 
 /*ListCategory*/
-func (cate *Categories) ListCategory(catlist CategoriesListReq) (tblcat []TblCategories, categories []TblCategories, parentcategory TblCategories, categorycount int64, err error) {
+func (cate *Categories) ListCategory(offset int, limit int, filter Filter, parent_id int) (tblcat []TblCategories, categories []TblCategories, parentcategory TblCategories, categorycount int64, err error) {
 
 	if Autherr := AuthandPermission(cate); Autherr != nil {
 
 		return
 	}
 	//get particular category
-	parentcategory, err1 := Categorymodel.GetCategoryById(catlist.ParentId, cate.DB)
+	parentcategory, err1 := Categorymodel.GetCategoryById(parent_id, cate.DB)
 
 	if err1 != nil {
 
@@ -39,26 +39,41 @@ func (cate *Categories) ListCategory(catlist CategoriesListReq) (tblcat []TblCat
 	}
 
 	//get overall count category
-	_, count := Categorymodel.GetCategoryList(catlist, 0, cate.DB)
 
-	childcategorys, _ := Categorymodel.GetCategoryList(catlist, 1, cate.DB)
+	var categorylist []TblCategories
 
-	childcategory, _ := Categorymodel.GetCategoryList(catlist, 0, cate.DB)
+	var categorylists []TblCategories
 
+	var categorys []TblCategories
+
+	if err1 != nil {
+		fmt.Println(err)
+	}
+	_, count := Categorymodel.GetSubCategoryList(&categorylist, 0, 0, filter, parent_id, 0, cate.DB)
+
+	fmt.Println("d", count)
+
+	childcategorys, _ := Categorymodel.GetSubCategoryList(&categorys, offset, limit, filter, parent_id, 1, cate.DB)
+
+	childcategory, _ := Categorymodel.GetSubCategoryList(&categorylist, offset, limit, filter, parent_id, 0, cate.DB)
+
+	for _, val := range *childcategory {
+
+		if !val.ModifiedOn.IsZero() {
+
+			val.DateString = val.ModifiedOn.Format("02 Jan 2006 03:04 PM")
+
+		} else {
+			val.DateString = val.CreatedOn.Format("02 Jan 2006 03:04 PM")
+
+		}
+
+		categorylists = append(categorylists, val)
+
+	}
 	var AllCategorieswithSubCategories []Arrangecategories
 
-	var id int
-
-	if catlist.ParentId != 0 {
-
-		id = catlist.ParentId
-
-	} else if catlist.CategoryGroupId != 0 {
-
-		id = catlist.CategoryGroupId
-	}
-
-	GetData, _ := Categorymodel.GetCategoryTree(id, cate.DB)
+	GetData, _ := Categorymodel.GetCategoryTree(parent_id, cate.DB)
 
 	var pid int
 
@@ -172,7 +187,7 @@ func (cate *Categories) ListCategory(catlist CategoriesListReq) (tblcat []TblCat
 
 	var FinalModalCategoriesList []TblCategories
 
-	for index, val := range childcategorys {
+	for index, val := range *childcategorys {
 
 		// var finalcat TblCategory
 
@@ -192,7 +207,7 @@ func (cate *Categories) ListCategory(catlist CategoriesListReq) (tblcat []TblCat
 	}
 	var FinalCategoriesList []TblCategories
 
-	for index, val := range childcategory {
+	for index, val := range categorylists {
 
 		// var finalcat TblCategory
 
@@ -200,7 +215,7 @@ func (cate *Categories) ListCategory(catlist CategoriesListReq) (tblcat []TblCat
 
 		for cindex, val2 := range FinalCategoryList {
 
-			if index+catlist.Offset == cindex {
+			if index+offset == cindex {
 
 				for _, va3 := range val2.Categories {
 
@@ -407,7 +422,6 @@ func (cate CategoryModel) DeleteCategoryByIds(category *TblCategories, categoryI
 }
 
 // multiselect get entry category Id function
-
 func (cate CategoryModel) MultiGetEntryCategoryids(entryCategory *TblChannelEntrie, channelId []int, DB *gorm.DB) (entries []string, categoryRowIds []string, entryRowIds []string, err error) {
 
 	var entryId []string
