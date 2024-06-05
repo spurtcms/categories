@@ -17,9 +17,9 @@ func (cat *Categories) CategoryGroupList(limit int, offset int, filter Filter) (
 		return []TblCategories{}, 0, AuthError
 	}
 
-	_, Total_categories, _ := Categorymodel.CategoryGroupList(0, 0, filter, cat.DB)
+	_, Total_categories, _ := Categorymodel.CategoryGroupList(0, 0, filter, true, cat.DB)
 
-	categorygrplist, _, cerr := Categorymodel.CategoryGroupList(offset, limit, filter, cat.DB)
+	categorygrplist, _, cerr := Categorymodel.CategoryGroupList(offset, limit, filter, true, cat.DB)
 
 	if cerr != nil {
 
@@ -124,7 +124,17 @@ func (cat *Categories) DeleteCategoryGroup(Categoryid int, modifiedby int) error
 		individualid = append(individualid, indivi)
 	}
 
-	spacecategory := individualid[0]
+	derr := DeleteGroupchannelcategoryid(Categoryid, cat.DB)
+	if derr != nil {
+		fmt.Println(derr)
+	}
+
+	dcat := DeleteGroupEntriesCategoryid(Categoryid, cat.DB)
+	if derr != nil {
+		fmt.Println(dcat)
+	}
+
+	// spacecategory := individualid[0]
 
 	var category TblCategories
 
@@ -134,7 +144,7 @@ func (cat *Categories) DeleteCategoryGroup(Categoryid int, modifiedby int) error
 
 	category.IsDeleted = 1
 
-	err := Categorymodel.DeleteallCategoryById(&category, individualid, spacecategory, cat.DB)
+	err := Categorymodel.DeleteallCategoryById(&category, individualid, cat.DB)
 
 	if err != nil {
 

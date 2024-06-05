@@ -3,7 +3,7 @@ module github.com/spurtcms/categories
 go 1.19
 
 require (
-	github.com/spurtcms/auth v0.0.2
+	github.com/spurtcms/auth v0.0.5
 	github.com/spurtcms/team-roles v0.0.3
 	gorm.io/gorm v1.25.9
 )

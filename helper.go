@@ -1,5 +1,13 @@
 package categories
 
+import (
+	"fmt"
+	"strconv"
+	"strings"
+
+	"gorm.io/gorm"
+)
+
 // Check category name already exists
 func (cate *Categories) CheckCategroyGroupName(id int, name string) (bool, error) {
 
@@ -164,4 +172,185 @@ func contains(slice []int, item int) (check bool, index int) {
 	}
 
 	return false, -1
+}
+
+func (cate *Categories) DeleteChannelsubCategories(db *gorm.DB, categoryid int) error {
+
+	subcategoryIds, subrowId, err1 := Categorymodel.GetChannelCategoryids(&TblChannelCategorie{}, db)
+	if err1 != nil {
+		return err1
+	}
+
+	subCategoryIdInt := make([][]int, len(subcategoryIds))
+
+	for i, subCategoryId := range subcategoryIds {
+		values := strings.Split(subCategoryId, ",")
+		intValues := make([]int, len(values))
+		for j, value := range values {
+			intValues[j], _ = strconv.Atoi(value)
+		}
+		subCategoryIdInt[i] = intValues
+	}
+
+	err1 = Categorymodel.DeleteChannelCategoryids(&TblChannelCategorie{}, subCategoryIdInt, subrowId, categoryid, db)
+	if err1 != nil {
+		return err1
+	}
+
+	return nil
+}
+
+func (cate *Categories) DeleteEntriessubCategories(db *gorm.DB, categoryid int) error {
+
+	subEntryIds, subCategoryRowIds, subEntryRowIds, err2 := Categorymodel.GetEntryCategoryids(&TblChannelEntrie{}, categoryid, db)
+	if err2 != nil {
+		return err2
+	}
+
+	var subEntriesIdInt [][]int
+
+	for i, _ := range subEntryIds {
+		values := subEntryIds[i]
+		intValues := make([]int, len(values))
+		if len(values) == 1 {
+			intValues[0], _ = strconv.Atoi(values)
+			subEntriesIdInt = append(subEntriesIdInt, intValues)
+		} else if len(values) > 1 {
+			splittedVal := strings.Split(values, ",")
+			intValues := make([]int, len(splittedVal))
+			for j, value := range splittedVal {
+				intValues[j], _ = strconv.Atoi(value)
+			}
+			subEntriesIdInt = append(subEntriesIdInt, intValues)
+		}
+	}
+
+	subCategoryRowIdInt := make([]int, len(subCategoryRowIds))
+	subEntryRowIdInt := make([]int, len(subEntryRowIds))
+
+	for i, val := range subCategoryRowIds {
+		subCategoryRowIdInt[i], _ = strconv.Atoi(val)
+	}
+
+	for i, val := range subEntryRowIds {
+		subEntryRowIdInt[i], _ = strconv.Atoi(val)
+	}
+
+	var updatedSubEntryId string
+	var updatedSubRowId int
+
+	for _, rowId := range subCategoryRowIdInt {
+
+		for i, subEntryIdInt := range subEntriesIdInt {
+
+			ok, index := contains(subEntryIdInt, rowId)
+			fmt.Println("ok", ok)
+
+			if ok {
+				updatedSubRowId = subEntryRowIdInt[i]
+				var newSlice []int
+				newSlice = append(newSlice, subEntryIdInt[:index]...)
+				newSlice = append(newSlice, subEntryIdInt[index+1:]...)
+				subEntriesIdInt[i] = newSlice
+				updatedSubEntryId = strings.Trim(strings.Join(strings.Fields(fmt.Sprint(newSlice)), ","), "[]")
+				err2 := Categorymodel.DeleteEntryCategoryids(&TblChannelEntrie{}, updatedSubEntryId, updatedSubRowId, db)
+				if err2 != nil {
+					fmt.Println("err2:", err2)
+					return err2
+				}
+
+			}
+
+		}
+	}
+	return nil
+}
+
+func DeleteGroupchannelcategoryid(Categoryid int, DB *gorm.DB) error {
+
+	channelIds, rowIds, err1 := Categorymodel.GetChannelCategoryids(&TblChannelCategorie{}, DB)
+	if err1 != nil {
+		return err1
+	}
+
+	channelIdInt := make([][]int, len(channelIds))
+
+	for i, channelId := range channelIds {
+		values := strings.Split(channelId, ",")
+		intValues := make([]int, len(values))
+		for j, value := range values {
+			intValues[j], _ = strconv.Atoi(value)
+		}
+		channelIdInt[i] = intValues
+	}
+
+	err1 = Categorymodel.DeleteChannelCategoryids(&TblChannelCategorie{}, channelIdInt, rowIds, Categoryid, DB)
+	if err1 != nil {
+		return err1
+	}
+
+	return nil
+}
+
+func DeleteGroupEntriesCategoryid(Categoryid int, DB *gorm.DB) error {
+
+	entryIds, categoryRowIds, entryRowIds, err2 := Categorymodel.GetEntryCategoryids(&TblChannelEntrie{}, Categoryid, DB)
+	if err2 != nil {
+
+		return err2
+	}
+
+	var entryIdInt [][]int
+
+	for i, _ := range entryIds {
+		values := entryIds[i]
+		intValues := make([]int, len(values))
+		if len(values) == 1 {
+			intValues[0], _ = strconv.Atoi(values)
+			entryIdInt = append(entryIdInt, intValues)
+		} else if len(values) > 1 {
+			splittedVal := strings.Split(values, ",")
+			intValues := make([]int, len(splittedVal))
+			for j, value := range splittedVal {
+				intValues[j], _ = strconv.Atoi(value)
+			}
+			entryIdInt = append(entryIdInt, intValues)
+		}
+
+	}
+
+	categoryRowIdInt := make([]int, len(categoryRowIds))
+	entryRowIdInt := make([]int, len(entryRowIds))
+
+	for i, val := range categoryRowIds {
+		categoryRowIdInt[i], _ = strconv.Atoi(val)
+	}
+
+	for i, val := range entryRowIds {
+		entryRowIdInt[i], _ = strconv.Atoi(val)
+	}
+
+	var updatedEntryId string
+	var updateRowId int
+
+	for _, rowid := range categoryRowIdInt {
+
+		for i, entryId := range entryIdInt {
+			ok, index := contains(entryId, rowid)
+
+			if ok {
+				updateRowId = entryRowIdInt[i]
+				var newSlice []int
+				newSlice = append(newSlice, entryId[:index]...)
+				newSlice = append(newSlice, entryId[index+1:]...)
+				entryIdInt[i] = newSlice
+				updatedEntryId = strings.Trim(strings.Join(strings.Fields(fmt.Sprint(newSlice)), ","), "[]")
+				err2 := Categorymodel.DeleteEntryCategoryids(&TblChannelEntrie{}, updatedEntryId, updateRowId, DB)
+				if err2 != nil {
+					return err2
+				}
+			}
+		}
+	}
+	return nil
 }
