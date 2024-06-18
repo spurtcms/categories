@@ -47,7 +47,7 @@ func (cat *Categories) CreateCategoryGroup(req CategoryCreate) error {
 
 	category.CategoryName = req.CategoryName
 
-	category.CategorySlug = strings.ToLower(req.CategoryName)
+	category.CategorySlug = strings.ToLower(strings.ReplaceAll(strings.TrimRight(req.CategoryName, " "), " ", "-"))
 
 	category.Description = req.Description
 
@@ -88,7 +88,7 @@ func (cat *Categories) UpdateCategoryGroup(req CategoryCreate) error {
 
 	category.Description = req.Description
 
-	category.CategorySlug = strings.ToLower(req.CategoryName)
+	category.CategorySlug = strings.ToLower(strings.ReplaceAll(strings.TrimRight(req.CategoryName, " "), " ", "-"))
 
 	category.ModifiedBy = req.ModifiedBy
 

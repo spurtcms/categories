@@ -246,7 +246,7 @@ func (cate *Categories) AddCategory(req CategoryCreate) error {
 
 	category.CategoryName = req.CategoryName
 
-	category.CategorySlug = strings.ToLower(req.CategoryName)
+	category.CategorySlug = strings.ToLower(strings.ReplaceAll(strings.TrimRight(req.CategoryName, " "), " ", "-"))
 
 	category.Description = req.Description
 
@@ -283,29 +283,18 @@ func (cate *Categories) UpdateSubCategory(req CategoryCreate) error {
 	}
 
 	var category TblCategories
-
 	category.CategoryName = req.CategoryName
-
-	category.CategorySlug = strings.ToLower(req.CategoryName)
-
+	category.CategorySlug = strings.ToLower(strings.ReplaceAll(strings.TrimRight(req.CategoryName, " "), " ", "-"))
 	category.Description = req.Description
-
 	category.ImagePath = req.ImagePath
-
 	category.ParentId = req.ParentId
-
 	category.CreatedBy = req.CreatedBy
-
 	category.Id = req.Id
-
 	category.ModifiedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
-
 	category.ModifiedBy = req.ModifiedBy
 
 	err := Categorymodel.UpdateCategory(&category, cate.DB)
-
 	if err != nil {
-
 		return err
 	}
 
@@ -317,22 +306,16 @@ func (cate *Categories) UpdateSubCategory(req CategoryCreate) error {
 func (cate *Categories) DeleteSubCategory(categoryid int, modifiedby int) error {
 
 	if Autherr := AuthandPermission(cate); Autherr != nil {
-
 		return Autherr
 	}
 
 	var category TblCategories
-
 	category.DeletedBy = modifiedby
-
 	category.DeletedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
-
 	category.IsDeleted = 1
-
 	err := Categorymodel.DeleteCategoryById(&category, categoryid, cate.DB)
 
 	if err != nil {
-
 		return err
 	}
 
@@ -344,14 +327,12 @@ func (cate *Categories) DeleteSubCategory(categoryid int, modifiedby int) error 
 func (cate *Categories) GetSubCategoryDetails(categoryid int) (categorys TblCategories, err error) {
 
 	if Autherr := AuthandPermission(cate); Autherr != nil {
-
 		return TblCategories{}, Autherr
 	}
 
 	category, err := Categorymodel.GetCategoryDetails(categoryid, cate.DB)
 
 	if err != nil {
-
 		return TblCategories{}, err
 	}
 
@@ -363,14 +344,11 @@ func (cate *Categories) GetSubCategoryDetails(categoryid int) (categorys TblCate
 func (cate *Categories) UpdateImagePath(ImagePath string) error {
 
 	if Autherr := AuthandPermission(cate); Autherr != nil {
-
 		return Autherr
 	}
 
 	err := Categorymodel.UpdateImagePath(ImagePath, cate.DB)
-
 	if err != nil {
-
 		return err
 	}
 
