@@ -28,4 +28,6 @@ type Categories struct {
 	PermissionEnable bool
 	Auth             *auth.Auth
 	Permissions      *role.PermissionConfig
+	DataAccess       int
+	UserId           int
 }

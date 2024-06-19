@@ -17,6 +17,9 @@ func (cat *Categories) CategoryGroupList(limit int, offset int, filter Filter) (
 		return []TblCategories{}, 0, AuthError
 	}
 
+	Categorymodel.DataAccess = cat.DataAccess
+	Categorymodel.Userid = cat.UserId
+
 	_, Total_categories, _ := Categorymodel.CategoryGroupList(0, 0, filter, true, cat.DB)
 
 	categorygrplist, _, cerr := Categorymodel.CategoryGroupList(offset, limit, filter, true, cat.DB)
