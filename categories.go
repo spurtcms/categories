@@ -51,8 +51,6 @@ func (cate *Categories) ListCategory(offset int, limit int, filter Filter, paren
 	}
 	_, count := Categorymodel.GetSubCategoryList(&categorylist, 0, 0, filter, parent_id, 0, cate.DB)
 
-	fmt.Println("d", count)
-
 	childcategorys, _ := Categorymodel.GetSubCategoryList(&categorys, offset, limit, filter, parent_id, 1, cate.DB)
 
 	childcategory, _ := Categorymodel.GetSubCategoryList(&categorylist, offset, limit, filter, parent_id, 0, cate.DB)
@@ -80,6 +78,8 @@ func (cate *Categories) ListCategory(offset int, limit int, filter Filter, paren
 	for _, categories := range GetData {
 
 		var addcat Arrangecategories
+
+		addcat.Assingedcategoryid = categories.Id
 
 		var individualid []CatgoriesOrd
 
@@ -137,6 +137,8 @@ func (cate *Categories) ListCategory(offset int, limit int, filter Filter, paren
 
 		singlecat = append(singlecat, newcate)
 
+		ReverseOrder.Assingedcategoryid = addcat.Assingedcategoryid
+
 		ReverseOrder.Categories = singlecat
 
 		AllCategorieswithSubCategories = append(AllCategorieswithSubCategories, ReverseOrder)
@@ -162,6 +164,9 @@ func (cate *Categories) ListCategory(offset int, limit int, filter Filter, paren
 			}
 
 		}
+
+		infinalarray.Assingedcategoryid = val.Assingedcategoryid
+
 		FinalCategoryList = append(FinalCategoryList, infinalarray)
 	}
 
@@ -182,6 +187,9 @@ func (cate *Categories) ListCategory(offset int, limit int, filter Filter, paren
 				infinalarray.Categories = append(infinalarray.Categories, cate)
 			}
 		}
+
+		infinalarray.Assingedcategoryid = val.Assingedcategoryid
+
 		FinalModalCategoryList = append(FinalModalCategoryList, infinalarray)
 	}
 
@@ -195,7 +203,7 @@ func (cate *Categories) ListCategory(offset int, limit int, filter Filter, paren
 
 		for cindex, val2 := range FinalModalCategoryList {
 
-			if index == cindex {
+			if index+offset == cindex && val2.Assingedcategoryid == val.Id {
 
 				for _, va3 := range val2.Categories {
 
@@ -205,23 +213,23 @@ func (cate *Categories) ListCategory(offset int, limit int, filter Filter, paren
 		}
 		FinalModalCategoriesList = append(FinalModalCategoriesList, finalcat)
 	}
+	
 	var FinalCategoriesList []TblCategories
 
-	for index, val := range categorylists {
-
-		// var finalcat TblCategory
+	for _, val := range categorylists {
 
 		finalcat := val
 
-		for cindex, val2 := range FinalCategoryList {
+		for _, val2 := range FinalCategoryList {
 
-			if index+offset == cindex {
+			if val2.Assingedcategoryid == val.Id {
 
 				for _, va3 := range val2.Categories {
 
 					finalcat.Parent = append(finalcat.Parent, va3.Category)
 				}
 			}
+
 		}
 		FinalCategoriesList = append(FinalCategoriesList, finalcat)
 	}
