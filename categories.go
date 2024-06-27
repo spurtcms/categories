@@ -213,7 +213,7 @@ func (cate *Categories) ListCategory(offset int, limit int, filter Filter, paren
 		}
 		FinalModalCategoriesList = append(FinalModalCategoriesList, finalcat)
 	}
-	
+
 	var FinalCategoriesList []TblCategories
 
 	for _, val := range categorylists {
@@ -315,6 +315,16 @@ func (cate *Categories) DeleteSubCategory(categoryid int, modifiedby int) error 
 
 	if Autherr := AuthandPermission(cate); Autherr != nil {
 		return Autherr
+	}
+
+	if err := cate.DeleteChannelsubCategories(categoryid); err != nil {
+
+		fmt.Println(err)
+	}
+
+	if err := cate.DeleteEntriessubCategories(categoryid); err != nil {
+
+		fmt.Println(err)
 	}
 
 	var category TblCategories

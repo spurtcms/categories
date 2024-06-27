@@ -137,7 +137,7 @@ func (cat *Categories) DeleteCategoryGroup(Categoryid int, modifiedby int) error
 		fmt.Println(dcat)
 	}
 
-	// spacecategory := individualid[0]
+	spacecategory := individualid[0]
 
 	var category TblCategories
 
@@ -147,7 +147,7 @@ func (cat *Categories) DeleteCategoryGroup(Categoryid int, modifiedby int) error
 
 	category.IsDeleted = 1
 
-	err := Categorymodel.DeleteallCategoryById(&category, individualid, cat.DB)
+	err := Categorymodel.DeleteallCategoryById(&category, individualid,spacecategory, cat.DB)
 
 	if err != nil {
 

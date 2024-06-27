@@ -330,13 +330,18 @@ func (cate CategoryModel) GetCategoryTree(categoryID int, DB *gorm.DB) ([]TblCat
 	return categories, nil
 }
 
-func (cate CategoryModel) DeleteallCategoryById(category *TblCategories, categoryId []int, DB *gorm.DB) error {
+func (cate CategoryModel) DeleteallCategoryById(category *TblCategories, categoryId []int, spacecatid int, DB *gorm.DB) error {
 
-	// if err := DB.Table("tbl_spaces").Where("page_category_id", spacecatid).Updates(TblCategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
+	if err := DB.Table("tbl_spaces").Where("page_category_id = ?", spacecatid).Updates(TblCategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
 
-	// 	return err
+		return err
 
-	// }
+	}
+
+	if err := DB.Table("tbl_jobs").Where("categories_id = ?", spacecatid).UpdateColumns(map[string]interface{}{"categories_id": 0}).Error; err != nil {
+
+		return err
+	}
 
 	if err := DB.Table("tbl_categories").Where("id in(?)", categoryId).Updates(TblCategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
 
@@ -532,6 +537,11 @@ func (cate CategoryModel) DeleteallCategoryByIds(category *TblCategories, catego
 		fmt.Println(err)
 		// return err
 
+	}
+
+	if err := DB.Table("tbl_jobs").Where("categories_id in (?)", spacecatid).UpdateColumns(map[string]interface{}{"categories_id": 0}).Error; err != nil {
+
+		return err
 	}
 
 	if err := DB.Table("tbl_categories").Where("id in(?)", categoryId).Updates(TblCategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {

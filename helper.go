@@ -174,9 +174,9 @@ func contains(slice []int, item int) (check bool, index int) {
 	return false, -1
 }
 
-func (cate *Categories) DeleteChannelsubCategories(db *gorm.DB, categoryid int) error {
+func (cate *Categories) DeleteChannelsubCategories(categoryid int) error {
 
-	subcategoryIds, subrowId, err1 := Categorymodel.GetChannelCategoryids(&TblChannelCategorie{}, db)
+	subcategoryIds, subrowId, err1 := Categorymodel.GetChannelCategoryids(&TblChannelCategorie{}, cate.DB)
 	if err1 != nil {
 		return err1
 	}
@@ -192,7 +192,7 @@ func (cate *Categories) DeleteChannelsubCategories(db *gorm.DB, categoryid int) 
 		subCategoryIdInt[i] = intValues
 	}
 
-	err1 = Categorymodel.DeleteChannelCategoryids(&TblChannelCategorie{}, subCategoryIdInt, subrowId, categoryid, db)
+	err1 = Categorymodel.DeleteChannelCategoryids(&TblChannelCategorie{}, subCategoryIdInt, subrowId, categoryid, cate.DB)
 	if err1 != nil {
 		return err1
 	}
@@ -200,9 +200,9 @@ func (cate *Categories) DeleteChannelsubCategories(db *gorm.DB, categoryid int) 
 	return nil
 }
 
-func (cate *Categories) DeleteEntriessubCategories(db *gorm.DB, categoryid int) error {
+func (cate *Categories) DeleteEntriessubCategories(categoryid int) error {
 
-	subEntryIds, subCategoryRowIds, subEntryRowIds, err2 := Categorymodel.GetEntryCategoryids(&TblChannelEntrie{}, categoryid, db)
+	subEntryIds, subCategoryRowIds, subEntryRowIds, err2 := Categorymodel.GetEntryCategoryids(&TblChannelEntrie{}, categoryid, cate.DB)
 	if err2 != nil {
 		return err2
 	}
@@ -253,7 +253,7 @@ func (cate *Categories) DeleteEntriessubCategories(db *gorm.DB, categoryid int) 
 				newSlice = append(newSlice, subEntryIdInt[index+1:]...)
 				subEntriesIdInt[i] = newSlice
 				updatedSubEntryId = strings.Trim(strings.Join(strings.Fields(fmt.Sprint(newSlice)), ","), "[]")
-				err2 := Categorymodel.DeleteEntryCategoryids(&TblChannelEntrie{}, updatedSubEntryId, updatedSubRowId, db)
+				err2 := Categorymodel.DeleteEntryCategoryids(&TblChannelEntrie{}, updatedSubEntryId, updatedSubRowId, cate.DB)
 				if err2 != nil {
 					fmt.Println("err2:", err2)
 					return err2
