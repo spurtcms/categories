@@ -138,7 +138,7 @@ func (categories CategoryModel) CategoryGroupList(offset int, limit int, filter 
 
 	if filter.Keyword != "" {
 
-		query = query.Where("LOWER(TRIM(category_name)) ILIKE LOWER(TRIM(?))", "%"+filter.Keyword+"%")
+		query = query.Where("LOWER(TRIM(category_name)) LIKE LOWER(TRIM(?))", "%"+filter.Keyword+"%")
 	}
 
 	if limit != 0 {
@@ -257,12 +257,12 @@ func (cate CategoryModel) GetCategoryList(categ CategoriesListReq, flag int, DB 
 	if categ.Keyword != "" {
 
 		if categ.Limit == 0 {
-			query.Raw(` `+res+` select count(count(distinct(cat_tree.id))) from cat_tree where is_deleted = 0 and LOWER(TRIM(category_name)) ILIKE LOWER(TRIM(?)) group by cat_tree.id `, "%"+categ.Keyword+"%").Count(&categorycount)
+			query.Raw(` `+res+` select count(count(distinct(cat_tree.id))) from cat_tree where is_deleted = 0 and LOWER(TRIM(category_name)) LIKE LOWER(TRIM(?)) group by cat_tree.id `, "%"+categ.Keyword+"%").Count(&categorycount)
 
 			return categorylist, categorycount
 		}
 
-		query = query.Raw(` `+res+` select distinct(cat_tree.id),cat_tree.* from cat_tree where is_deleted = 0 `+selectGroupRemove+outerlevel+onlycategories+` and LOWER(TRIM(category_name)) ILIKE LOWER(TRIM(?)) limit(?) offset(?) `, "%"+categ.Keyword+"%", categ.Limit, categ.Offset)
+		query = query.Raw(` `+res+` select distinct(cat_tree.id),cat_tree.* from cat_tree where is_deleted = 0 `+selectGroupRemove+outerlevel+onlycategories+` and LOWER(TRIM(category_name)) Like LOWER(TRIM(?)) limit(?) offset(?) `, "%"+categ.Keyword+"%", categ.Limit, categ.Offset)
 
 	} else if flag == 0 {
 
@@ -456,11 +456,11 @@ func (cate CategoryModel) GetSubCategoryList(categories *[]TblCategories, offset
 	if filter.Keyword != "" {
 
 		if limit == 0 {
-			query.Raw(` `+res+` select count(*) from cat_tree where is_deleted = 0 and parent_id != 0 and LOWER(TRIM(category_name)) ILIKE LOWER(TRIM(?)) group by cat_tree.id `, parent_id, "%"+filter.Keyword+"%").Count(&categorycount)
+			query.Raw(` `+res+` select count(*) from cat_tree where is_deleted = 0 and parent_id != 0 and LOWER(TRIM(category_name)) Like LOWER(TRIM(?)) group by cat_tree.id `, parent_id, "%"+filter.Keyword+"%").Count(&categorycount)
 
 			return categories, categorycount
 		}
-		query = query.Raw(` `+res+` select * from cat_tree where is_deleted = 0 and parent_id != 0 and LOWER(TRIM(category_name)) ILIKE LOWER(TRIM(?)) limit ? offset ? `, parent_id, "%"+filter.Keyword+"%", limit, offset)
+		query = query.Raw(` `+res+` select * from cat_tree where is_deleted = 0 and parent_id != 0 and LOWER(TRIM(category_name)) Like LOWER(TRIM(?)) limit ? offset ? `, parent_id, "%"+filter.Keyword+"%", limit, offset)
 	} else if flag == 0 {
 		query = query.Raw(``+res+` SELECT * FROM cat_tree where is_deleted = 0 and id not in (?) order by id desc limit ? offset ? `, parent_id, parent_id, limit, offset)
 	} else if flag == 1 {
