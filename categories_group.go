@@ -10,7 +10,7 @@ import (
 )
 
 /*List Category Group*/
-func (cat *Categories) CategoryGroupList(limit int, offset int, filter Filter) (Categorylist []TblCategories, categorycount int64, err error) {
+func (cat *Categories) CategoryGroupList(limit int, offset int, filter Filter, tenantid int) (Categorylist []TblCategories, categorycount int64, err error) {
 
 	if AuthError := AuthandPermission(cat); AuthError != nil {
 
@@ -20,9 +20,9 @@ func (cat *Categories) CategoryGroupList(limit int, offset int, filter Filter) (
 	Categorymodel.DataAccess = cat.DataAccess
 	Categorymodel.Userid = cat.UserId
 
-	_, Total_categories, _ := Categorymodel.CategoryGroupList(0, 0, filter, true, cat.DB)
+	_, Total_categories, _ := Categorymodel.CategoryGroupList(0, 0, filter, true, cat.DB, tenantid)
 
-	categorygrplist, _, cerr := Categorymodel.CategoryGroupList(offset, limit, filter, true, cat.DB)
+	categorygrplist, _, cerr := Categorymodel.CategoryGroupList(offset, limit, filter, true, cat.DB, tenantid)
 
 	if cerr != nil {
 
@@ -57,6 +57,8 @@ func (cat *Categories) CreateCategoryGroup(req CategoryCreate) error {
 	category.CreatedBy = req.CreatedBy
 
 	category.ParentId = 0
+	
+	category.TenantId = req.TenantId
 
 	category.CreatedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
 
@@ -72,7 +74,7 @@ func (cat *Categories) CreateCategoryGroup(req CategoryCreate) error {
 }
 
 /*UpdateCategoryGroup*/
-func (cat *Categories) UpdateCategoryGroup(req CategoryCreate) error {
+func (cat *Categories) UpdateCategoryGroup(req CategoryCreate, tenantid int) error {
 
 	if AuthError := AuthandPermission(cat); AuthError != nil {
 
@@ -97,7 +99,7 @@ func (cat *Categories) UpdateCategoryGroup(req CategoryCreate) error {
 
 	category.ModifiedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
 
-	err := Categorymodel.UpdateCategory(&category, cat.DB)
+	err := Categorymodel.UpdateCategory(&category, cat.DB, tenantid)
 
 	if err != nil {
 
@@ -109,14 +111,14 @@ func (cat *Categories) UpdateCategoryGroup(req CategoryCreate) error {
 }
 
 /*DeleteCategoryGroup*/
-func (cat *Categories) DeleteCategoryGroup(Categoryid int, modifiedby int) error {
+func (cat *Categories) DeleteCategoryGroup(Categoryid int, modifiedby int, tenantid int) error {
 
 	if AuthError := AuthandPermission(cat); AuthError != nil {
 
 		return AuthError
 	}
 
-	GetData, _ := Categorymodel.GetCategoryTree(Categoryid, cat.DB)
+	GetData, _ := Categorymodel.GetCategoryTree(Categoryid, cat.DB, tenantid)
 
 	var individualid []int
 
@@ -127,12 +129,12 @@ func (cat *Categories) DeleteCategoryGroup(Categoryid int, modifiedby int) error
 		individualid = append(individualid, indivi)
 	}
 
-	derr := DeleteGroupchannelcategoryid(Categoryid, cat.DB)
+	derr := DeleteGroupchannelcategoryid(Categoryid,cat.DB,tenantid)
 	if derr != nil {
 		fmt.Println(derr)
 	}
 
-	dcat := DeleteGroupEntriesCategoryid(Categoryid, cat.DB)
+	dcat := DeleteGroupEntriesCategoryid(Categoryid,cat.DB,tenantid )
 	if derr != nil {
 		fmt.Println(dcat)
 	}
@@ -147,7 +149,7 @@ func (cat *Categories) DeleteCategoryGroup(Categoryid int, modifiedby int) error
 
 	category.IsDeleted = 1
 
-	err := Categorymodel.DeleteallCategoryById(&category, individualid,spacecategory, cat.DB)
+	err := Categorymodel.DeleteallCategoryById(&category, individualid, spacecategory, tenantid, cat.DB)
 
 	if err != nil {
 
@@ -159,13 +161,13 @@ func (cat *Categories) DeleteCategoryGroup(Categoryid int, modifiedby int) error
 }
 
 /*DeleteCategoryGroup*/
-func (cat *Categories) MultiSelectDeleteCategoryGroup(Categoryids []int, modifiedby int) error {
+func (cat *Categories) MultiSelectDeleteCategoryGroup(Categoryids []int, modifiedby int, tenantid int) error {
 
 	var individualid []int
 
 	for _, Categoryid := range Categoryids {
 
-		GetData, _ := Categorymodel.GetCategoryTree(Categoryid, cat.DB)
+		GetData, _ := Categorymodel.GetCategoryTree(Categoryid, cat.DB, tenantid)
 
 		for _, GetParent := range GetData {
 
@@ -201,7 +203,7 @@ func (cat *Categories) MultiSelectDeleteCategoryGroup(Categoryids []int, modifie
 		return err1
 	}
 
-	multiEntryids, multiCategoryRowIds, multiEntryRowIds, err2 := Categorymodel.MultiGetEntryCategoryids(&TblChannelEntrie{}, Categoryids, cat.DB)
+	multiEntryids, multiCategoryRowIds, multiEntryRowIds, err2 := Categorymodel.MultiGetEntryCategoryids(&TblChannelEntrie{}, Categoryids, tenantid, cat.DB)
 	if err2 != nil {
 		return err2
 	}
@@ -251,7 +253,7 @@ func (cat *Categories) MultiSelectDeleteCategoryGroup(Categoryids []int, modifie
 				newSlice = append(newSlice, entryId[index+1:]...)
 				multiEntryIdInt[i] = newSlice
 				multiUpdatedEntryId = strings.Trim(strings.Join(strings.Fields(fmt.Sprint(newSlice)), ","), "[]")
-				err2 := Categorymodel.DeleteEntryCategoryids(&TblChannelEntrie{}, multiUpdatedEntryId, multiUpdateRowId, cat.DB)
+				err2 := Categorymodel.DeleteEntryCategoryids(&TblChannelEntrie{}, multiUpdatedEntryId, multiUpdateRowId, cat.DB, tenantid)
 				if err2 != nil {
 					return err2
 				}
@@ -267,7 +269,7 @@ func (cat *Categories) MultiSelectDeleteCategoryGroup(Categoryids []int, modifie
 
 	category.IsDeleted = 1
 
-	err := Categorymodel.DeleteallCategoryByIds(&category, Categoryids, spacecategory, cat.DB)
+	err := Categorymodel.DeleteallCategoryByIds(&category, Categoryids, spacecategory, tenantid, cat.DB)
 
 	if err != nil {
 
@@ -279,7 +281,7 @@ func (cat *Categories) MultiSelectDeleteCategoryGroup(Categoryids []int, modifie
 }
 
 // Delete Multiselect subcategory//
-func (cat *Categories) MultiselectSubCategoryDelete(Categoryids []int, modifiedby int) error {
+func (cat *Categories) MultiselectSubCategoryDelete(Categoryids []int, modifiedby int, tenantid int) error {
 
 	multiSubCategoryIds, multiSubRowIds, err1 := Categorymodel.MultiselectGetChannelCategoryids(&TblChannelCategorie{}, cat.DB)
 	if err1 != nil {
@@ -302,7 +304,7 @@ func (cat *Categories) MultiselectSubCategoryDelete(Categoryids []int, modifiedb
 		return err1
 	}
 
-	multiSubEntryIds, multiSubCategoryRowIds, multiSubEntryRowIds, err2 := Categorymodel.MultiGetEntryCategoryids(&TblChannelEntrie{}, Categoryids, cat.DB)
+	multiSubEntryIds, multiSubCategoryRowIds, multiSubEntryRowIds, err2 := Categorymodel.MultiGetEntryCategoryids(&TblChannelEntrie{}, Categoryids, tenantid, cat.DB)
 	if err2 != nil {
 		return err2
 	}
@@ -352,7 +354,7 @@ func (cat *Categories) MultiselectSubCategoryDelete(Categoryids []int, modifiedb
 				newSlice = append(newSlice, entryId[index+1:]...)
 				multiSubEntryIdsInt[i] = newSlice
 				multiSubUpdatedEntryId = strings.Trim(strings.Join(strings.Fields(fmt.Sprint(newSlice)), ","), "[]")
-				err2 := Categorymodel.DeleteEntryCategoryids(&TblChannelEntrie{}, multiSubUpdatedEntryId, multiSubUpdateRowId, cat.DB)
+				err2 := Categorymodel.DeleteEntryCategoryids(&TblChannelEntrie{}, multiSubUpdatedEntryId, multiSubUpdateRowId, cat.DB, tenantid)
 				if err2 != nil {
 					return err2
 				}
@@ -368,7 +370,7 @@ func (cat *Categories) MultiselectSubCategoryDelete(Categoryids []int, modifiedb
 
 	category.IsDeleted = 1
 
-	err := Categorymodel.DeleteCategoryByIds(&category, Categoryids, cat.DB)
+	err := Categorymodel.DeleteCategoryByIds(&category, Categoryids, tenantid, cat.DB)
 	if err != nil {
 		return err
 	}

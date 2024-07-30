@@ -19,7 +19,8 @@ type TblCategories struct {
 	ModifiedBy   int       `gorm:"DEFAULT:NULL"`
 	IsDeleted    int       `gorm:"type:integer"`
 	DeletedOn    time.Time `gorm:"type:timestamp without time zone;DEFAULT:NULL"`
-	DeletedBy    int       `gorm:"DEFAULT:NULL;type:integer"`
+	DeletedBy    int       `gorm:"type:integer"`
+	TenantId     int       `gorm:"DEFAULT:1;type:integer"`
 }
 
 type TblChannelCategorie struct {
@@ -28,6 +29,7 @@ type TblChannelCategorie struct {
 	CategoryId string    `gorm:"type:character varying"`
 	CreatedAt  int       `gorm:"type:integer"`
 	CreatedOn  time.Time `gorm:"type:timestamp without time zone"`
+	TenantId   int       `gorm:"type:integer"`
 }
 
 // MigrateTable creates this package related tables in your database
@@ -41,6 +43,6 @@ func MigrationTables(db *gorm.DB) {
 		panic(err)
 	}
 
-	db.Exec(`INSERT INTO public.tbl_categories(id, category_name, category_slug, created_on, created_by,is_deleted, parent_id, description)	VALUES (1, 'Default Category', 'default_category', '2024-03-04 11:22:03', 1, 0, 0, 'Default_Category'),(2, 'Default1', 'default1', '2024-03-04 11:22:03', 1, 0, 1, 'Default1');`)
+	db.Exec(`INSERT INTO public.tbl_categories(id, category_name, category_slug, created_on, created_by,is_deleted, parent_id, description,tenant_id)	VALUES (1, 'Default Category', 'default_category', '2024-03-04 11:22:03', 1, 0, 0, 'Default_Category',1),(2, 'Default1', 'default1', '2024-03-04 11:22:03', 1, 0, 1, 'Default1',1);`)
 
 }

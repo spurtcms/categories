@@ -24,14 +24,14 @@ func CategoriesSetup(config Config) *Categories {
 }
 
 /*ListCategory*/
-func (cate *Categories) ListCategory(offset int, limit int, filter Filter, parent_id int) (tblcat []TblCategories, categories []TblCategories, parentcategory TblCategories, categorycount int64, err error) {
+func (cate *Categories) ListCategory(offset int, limit int, filter Filter, parent_id int, tenantid int) (tblcat []TblCategories, categories []TblCategories, parentcategory TblCategories, categorycount int64, err error) {
 
 	if Autherr := AuthandPermission(cate); Autherr != nil {
 
 		return
 	}
 	//get particular category
-	parentcategory, err1 := Categorymodel.GetCategoryById(parent_id, cate.DB)
+	parentcategory, err1 := Categorymodel.GetCategoryById(parent_id, cate.DB, tenantid)
 
 	if err1 != nil {
 
@@ -49,11 +49,11 @@ func (cate *Categories) ListCategory(offset int, limit int, filter Filter, paren
 	if err1 != nil {
 		fmt.Println(err)
 	}
-	_, count := Categorymodel.GetSubCategoryList(&categorylist, 0, 0, filter, parent_id, 0, cate.DB)
+	_, count := Categorymodel.GetSubCategoryList(&categorylist, 0, 0, tenantid, filter, parent_id, 0, cate.DB)
 
-	childcategorys, _ := Categorymodel.GetSubCategoryList(&categorys, offset, limit, filter, parent_id, 1, cate.DB)
+	childcategorys, _ := Categorymodel.GetSubCategoryList(&categorys, offset, limit, tenantid, filter, parent_id, 1, cate.DB)
 
-	childcategory, _ := Categorymodel.GetSubCategoryList(&categorylist, offset, limit, filter, parent_id, 0, cate.DB)
+	childcategory, _ := Categorymodel.GetSubCategoryList(&categorylist, offset, limit, tenantid, filter, parent_id, 0, cate.DB)
 
 	for _, val := range *childcategory {
 
@@ -71,7 +71,7 @@ func (cate *Categories) ListCategory(offset int, limit int, filter Filter, paren
 	}
 	var AllCategorieswithSubCategories []Arrangecategories
 
-	GetData, _ := Categorymodel.GetCategoryTree(parent_id, cate.DB)
+	GetData, _ := Categorymodel.GetCategoryTree(parent_id, cate.DB, tenantid)
 
 	var pid int
 
@@ -263,6 +263,8 @@ func (cate *Categories) AddCategory(req CategoryCreate) error {
 	category.CreatedBy = req.CreatedBy
 
 	category.ParentId = req.ParentId
+	
+	category.TenantId = req.TenantId
 
 	category.CreatedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
 
@@ -278,7 +280,7 @@ func (cate *Categories) AddCategory(req CategoryCreate) error {
 }
 
 /*Update Sub category*/
-func (cate *Categories) UpdateSubCategory(req CategoryCreate) error {
+func (cate *Categories) UpdateSubCategory(req CategoryCreate, tenantid int) error {
 
 	if Autherr := AuthandPermission(cate); Autherr != nil {
 
@@ -301,7 +303,7 @@ func (cate *Categories) UpdateSubCategory(req CategoryCreate) error {
 	category.ModifiedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
 	category.ModifiedBy = req.ModifiedBy
 
-	err := Categorymodel.UpdateCategory(&category, cate.DB)
+	err := Categorymodel.UpdateCategory(&category, cate.DB, tenantid)
 	if err != nil {
 		return err
 	}
@@ -311,18 +313,18 @@ func (cate *Categories) UpdateSubCategory(req CategoryCreate) error {
 }
 
 /*Delete Sub Category*/
-func (cate *Categories) DeleteSubCategory(categoryid int, modifiedby int) error {
+func (cate *Categories) DeleteSubCategory(categoryid int, modifiedby int, tenantid int) error {
 
 	if Autherr := AuthandPermission(cate); Autherr != nil {
 		return Autherr
 	}
 
-	if err := cate.DeleteChannelsubCategories(categoryid); err != nil {
+	if err := cate.DeleteChannelsubCategories(categoryid, tenantid); err != nil {
 
 		fmt.Println(err)
 	}
 
-	if err := cate.DeleteEntriessubCategories(categoryid); err != nil {
+	if err := cate.DeleteEntriessubCategories(categoryid, tenantid); err != nil {
 
 		fmt.Println(err)
 	}
@@ -331,7 +333,7 @@ func (cate *Categories) DeleteSubCategory(categoryid int, modifiedby int) error 
 	category.DeletedBy = modifiedby
 	category.DeletedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
 	category.IsDeleted = 1
-	err := Categorymodel.DeleteCategoryById(&category, categoryid, cate.DB)
+	err := Categorymodel.DeleteCategoryById(&category, categoryid, tenantid, cate.DB)
 
 	if err != nil {
 		return err
@@ -342,13 +344,13 @@ func (cate *Categories) DeleteSubCategory(categoryid int, modifiedby int) error 
 }
 
 // Get Sub Category List
-func (cate *Categories) GetSubCategoryDetails(categoryid int) (categorys TblCategories, err error) {
+func (cate *Categories) GetSubCategoryDetails(categoryid int, tenantid int) (categorys TblCategories, err error) {
 
 	if Autherr := AuthandPermission(cate); Autherr != nil {
 		return TblCategories{}, Autherr
 	}
 
-	category, err := Categorymodel.GetCategoryDetails(categoryid, cate.DB)
+	category, err := Categorymodel.GetCategoryDetails(categoryid, tenantid, cate.DB)
 
 	if err != nil {
 		return TblCategories{}, err
@@ -359,13 +361,13 @@ func (cate *Categories) GetSubCategoryDetails(categoryid int) (categorys TblCate
 }
 
 /*Remove entries cover image if media image delete*/
-func (cate *Categories) UpdateImagePath(ImagePath string) error {
+func (cate *Categories) UpdateImagePath(ImagePath string, tenantid int) error {
 
 	if Autherr := AuthandPermission(cate); Autherr != nil {
 		return Autherr
 	}
 
-	err := Categorymodel.UpdateImagePath(ImagePath, cate.DB)
+	err := Categorymodel.UpdateImagePath(ImagePath, tenantid, cate.DB)
 	if err != nil {
 		return err
 	}
