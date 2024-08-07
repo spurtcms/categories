@@ -133,7 +133,7 @@ func (categories CategoryModel) CategoryGroupList(offset int, limit int, filter 
 
 	var categorycount int64
 
-	query := DB.Table("tbl_categories").Where("is_deleted = 0 and parent_id=0 and tenant_id = ?", tenantid).Order("id desc")
+	query := DB.Table("tbl_categories").Where("is_deleted = 0 and parent_id=0 and (tenant_id is NULL or tenant_id = ?)", tenantid).Order("id desc")
 
 	if createonly && categories.DataAccess == 1 {
 
@@ -142,7 +142,7 @@ func (categories CategoryModel) CategoryGroupList(offset int, limit int, filter 
 
 	if filter.Keyword != "" {
 
-		query = query.Where("LOWER(TRIM(category_name)) LIKE LOWER(TRIM(?))", "%"+filter.Keyword+"%")
+		query = query.Where("LOWER(TRIM(category_name)) ILIKE LOWER(TRIM(?))", "%"+filter.Keyword+"%")
 	}
 
 	if limit != 0 {
@@ -179,12 +179,12 @@ func (categories CategoryModel) UpdateCategory(category *TblCategories, DB *gorm
 
 	if category.ParentId == 0 && category.ImagePath == "" {
 
-		if err := DB.Table("tbl_categories").Where("id = ? and tenant_id = ?", category.Id, tenantid).UpdateColumns(map[string]interface{}{"category_name": category.CategoryName, "category_slug": category.CategorySlug, "description": category.Description, "modified_by": category.ModifiedBy, "modified_on": category.ModifiedOn}).Error; err != nil {
+		if err := DB.Table("tbl_categories").Where("id = ? and (tenant_id is NULL or tenant_id = ?)", category.Id, tenantid).UpdateColumns(map[string]interface{}{"category_name": category.CategoryName, "category_slug": category.CategorySlug, "description": category.Description, "modified_by": category.ModifiedBy, "modified_on": category.ModifiedOn}).Error; err != nil {
 
 			return err
 		}
 	} else {
-		if err := DB.Table("tbl_categories").Where("id = ? and tenant_id = ?", category.Id, tenantid).UpdateColumns(map[string]interface{}{"category_name": category.CategoryName, "parent_id": category.ParentId, "category_slug": category.CategorySlug, "description": category.Description, "image_path": category.ImagePath, "modified_by": category.ModifiedBy, "modified_on": category.ModifiedOn}).Error; err != nil {
+		if err := DB.Table("tbl_categories").Where("id = ? and (tenant_id is NULL or tenant_id = ?)", category.Id, tenantid).UpdateColumns(map[string]interface{}{"category_name": category.CategoryName, "parent_id": category.ParentId, "category_slug": category.CategorySlug, "description": category.Description, "image_path": category.ImagePath, "modified_by": category.ModifiedBy, "modified_on": category.ModifiedOn}).Error; err != nil {
 
 			return err
 		}
@@ -261,20 +261,20 @@ func (cate CategoryModel) GetCategoryList(categ CategoriesListReq, flag int, DB 
 	if categ.Keyword != "" {
 
 		if categ.Limit == 0 {
-			query.Raw(` `+res+` select count(count(distinct(cat_tree.id))) from cat_tree where is_deleted = 0 and LOWER(TRIM(category_name)) ILIKE LOWER(TRIM(?)) group by cat_tree.id and tenant_id = ?`, "%"+categ.Keyword+"%", tenantid).Count(&categorycount)
+			query.Raw(` `+res+` select count(count(distinct(cat_tree.id))) from cat_tree where is_deleted = 0 and LOWER(TRIM(category_name)) ILIKE LOWER(TRIM(?)) group by cat_tree.id and (tenant_id is NULL or tenant_id = ?)`, "%"+categ.Keyword+"%", tenantid).Count(&categorycount)
 
 			return categorylist, categorycount
 		}
 
-		query = query.Raw(` `+res+` select distinct(cat_tree.id),cat_tree.* from cat_tree where is_deleted = 0 `+selectGroupRemove+outerlevel+onlycategories+` and tenant_id = ? and LOWER(TRIM(category_name)) ILIKE LOWER(TRIM(?)) limit(?) offset(?) `, tenantid, "%"+categ.Keyword+"%", categ.Limit, categ.Offset)
+		query = query.Raw(` `+res+` select distinct(cat_tree.id),cat_tree.* from cat_tree where is_deleted = 0 `+selectGroupRemove+outerlevel+onlycategories+` and (tenant_id is NULL or tenant_id = ?) and LOWER(TRIM(category_name)) ILIKE LOWER(TRIM(?)) limit(?) offset(?) `, tenantid, "%"+categ.Keyword+"%", categ.Limit, categ.Offset)
 
 	} else if flag == 0 {
 
-		query = query.Raw(``+res+` SELECT distinct(cat_tree.id),cat_tree.* FROM cat_tree where is_deleted = 0 `+selectGroupRemove+outerlevel+onlycategories+`  and tenant_id = ? and id not in (?) order by id desc limit(?) offset(?) `, categ.ParentId, tenantid, categ.Limit, categ.Offset)
+		query = query.Raw(``+res+` SELECT distinct(cat_tree.id),cat_tree.* FROM cat_tree where is_deleted = 0 `+selectGroupRemove+outerlevel+onlycategories+`  and (tenant_id is NULL or tenant_id = ?) and id not in (?) order by id desc limit(?) offset(?) `, categ.ParentId, tenantid, categ.Limit, categ.Offset)
 
 	} else if flag == 1 {
 
-		query = query.Raw(``+res+` SELECT * FROM cat_tree where is_deleted = 0 and tenant_id = ? order by id desc `, categ.ParentId, tenantid)
+		query = query.Raw(``+res+` SELECT * FROM cat_tree where is_deleted = 0 and (tenant_id is NULL or tenant_id = ?) order by id desc `, categ.ParentId, tenantid)
 	}
 
 	if categ.Limit != 0 {
@@ -295,7 +295,7 @@ func (cate CategoryModel) GetCategoryList(categ CategoriesListReq, flag int, DB 
 /*getCategory Details*/
 func (cate CategoryModel) GetCategoryById(categoryId int, DB *gorm.DB, tenantid int) (categorylist TblCategories, err error) {
 
-	if err := DB.Table("tbl_categories").Where("is_deleted=0 and id= ? and tenant_id = ?", categoryId, tenantid).First(&categorylist).Error; err != nil {
+	if err := DB.Table("tbl_categories").Where("is_deleted=0 and id= ? and (tenant_id is NULL or tenant_id = ?)", categoryId, tenantid).First(&categorylist).Error; err != nil {
 
 		return TblCategories{}, err
 	}
@@ -313,7 +313,7 @@ func (cate CategoryModel) GetCategoryTree(categoryID int, DB *gorm.DB, tenantid 
 			modified_on,
 			is_deleted
 			FROM tbl_categories
-			WHERE id = ? and tenant_id =?
+			WHERE id = ? and (tenant_id is NULL or tenant_id =?)
 			UNION ALL
 			SELECT cat.id, cat.category_name,
 			cat.category_slug,
@@ -336,18 +336,18 @@ func (cate CategoryModel) GetCategoryTree(categoryID int, DB *gorm.DB, tenantid 
 
 func (cate CategoryModel) DeleteallCategoryById(category *TblCategories, categoryId []int, spacecatid, tenantid int, DB *gorm.DB) error {
 
-	if err := DB.Table("tbl_spaces").Where("page_category_id = ? and tenant_id = ?", spacecatid, tenantid).Updates(TblCategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
+	if err := DB.Table("tbl_spaces").Where("page_category_id = ? and (tenant_id is NULL or tenant_id = ?)", spacecatid, tenantid).Updates(TblCategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
 
 		return err
 
 	}
 
-	if err := DB.Table("tbl_jobs").Where("categories_id = ? and tenant_id = ?", spacecatid, tenantid).UpdateColumns(map[string]interface{}{"categories_id": 0}).Error; err != nil {
+	if err := DB.Table("tbl_jobs").Where("categories_id = ? and (tenant_id is NULL or tenant_id = ?)", spacecatid, tenantid).UpdateColumns(map[string]interface{}{"categories_id": 0}).Error; err != nil {
 
 		return err
 	}
 
-	if err := DB.Table("tbl_categories").Where("id in(?) and tenant_id = ?", categoryId, tenantid).Updates(TblCategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
+	if err := DB.Table("tbl_categories").Where("id in(?) and (tenant_id is NULL or tenant_id = ?)", categoryId, tenantid).Updates(TblCategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
 
 		return err
 
@@ -358,7 +358,7 @@ func (cate CategoryModel) DeleteallCategoryById(category *TblCategories, categor
 
 func (cate CategoryModel) DeleteCategoryById(category *TblCategories, categoryId, tenantid int, DB *gorm.DB) error {
 
-	if err := DB.Table("tbl_categories").Where("id = ? and tenant_id = ?", categoryId).Updates(TblCategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
+	if err := DB.Table("tbl_categories").Where("id = ? and (tenant_id is NULL or tenant_id = ?)", categoryId).Updates(TblCategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
 
 		return err
 
@@ -370,7 +370,7 @@ func (cate CategoryModel) DeleteCategoryById(category *TblCategories, categoryId
 // Get Childern list
 func (cate CategoryModel) GetCategoryDetails(id, tenantid int, DB *gorm.DB) (category TblCategories, err error) {
 
-	if err := DB.Table("tbl_categories").Where("id=? and tenant_id  =?", id, tenantid).First(&category).Error; err != nil {
+	if err := DB.Table("tbl_categories").Where("id=? and (tenant_id is NULL or tenant_id = ?)", id, tenantid).First(&category).Error; err != nil {
 
 		return TblCategories{}, err
 	}
@@ -383,13 +383,13 @@ func (cate CategoryModel) CheckCategoryGroupName(category TblCategories, userid 
 
 	if userid == 0 {
 
-		if err := DB.Table("tbl_categories").Where("LOWER(TRIM(category_name))=LOWER(TRIM(?)) and is_deleted=0 and tenant_id = ?", name, tenantid).First(&category).Error; err != nil {
+		if err := DB.Table("tbl_categories").Where("LOWER(TRIM(category_name))=LOWER(TRIM(?)) and is_deleted=0 and (tenant_id is NULL or tenant_id = ?)", name, tenantid).First(&category).Error; err != nil {
 
 			return err
 		}
 	} else {
 
-		if err := DB.Table("tbl_categories").Where("LOWER(TRIM(category_name))=LOWER(TRIM(?)) and id not in (?) and is_deleted=0 and tenant_id = ?", name, userid, tenantid).First(&category).Error; err != nil {
+		if err := DB.Table("tbl_categories").Where("LOWER(TRIM(category_name))=LOWER(TRIM(?)) and id not in (?) and is_deleted=0 and (tenant_id is NULL or tenant_id = ?)", name, userid, tenantid).First(&category).Error; err != nil {
 
 			return err
 		}
@@ -400,7 +400,7 @@ func (cate CategoryModel) CheckCategoryGroupName(category TblCategories, userid 
 
 func (cate CategoryModel) GetAllParentCategory(DB *gorm.DB, tenantid int) (categories []TblCategories, err error) {
 
-	if err := DB.Table("tbl_categories").Where("parent_id=0 and is_deleted=0 and tenant_id = ?", tenantid).Find(&categories).Error; err != nil {
+	if err := DB.Table("tbl_categories").Where("parent_id=0 and is_deleted=0 and (tenant_id is NULL or tenant_id = ?)", tenantid).Find(&categories).Error; err != nil {
 
 		return []TblCategories{}, err
 	}
@@ -412,13 +412,13 @@ func (cate CategoryModel) CheckSubCategoryName(categoryid []int, currentid int, 
 
 	if len(categoryid) == 0 {
 
-		if err := DB.Table("tbl_categories").Where("LOWER(TRIM(category_name))=LOWER(TRIM(?)) and is_deleted=0 and tenant_id = ?", name, tenantid).First(&category).Error; err != nil {
+		if err := DB.Table("tbl_categories").Where("LOWER(TRIM(category_name))=LOWER(TRIM(?)) and is_deleted=0 and (tenant_id is NULL or tenant_id = ?)", name, tenantid).First(&category).Error; err != nil {
 
 			return TblCategories{}, err
 		}
 	} else {
 
-		if err := DB.Table("tbl_categories").Where("LOWER(TRIM(category_name))=LOWER(TRIM(?)) and id in (?) and id not in (?) and is_deleted=0 and tenant_id = ?", name, categoryid, currentid, tenantid).First(&category).Error; err != nil {
+		if err := DB.Table("tbl_categories").Where("LOWER(TRIM(category_name))=LOWER(TRIM(?)) and id in (?) and id not in (?) and is_deleted=0 and (tenant_id is NULL or tenant_id = ?)", name, categoryid, currentid, tenantid).First(&category).Error; err != nil {
 
 			return TblCategories{}, err
 		}
@@ -430,7 +430,7 @@ func (cate CategoryModel) CheckSubCategoryName(categoryid []int, currentid int, 
 // update imagepath
 func (cate CategoryModel) UpdateImagePath(Imagepath string, tenantid int, DB *gorm.DB) error {
 
-	if err := DB.Table("tbl_categories").Where("image_path=? and tenant_id = ?", Imagepath).UpdateColumns(map[string]interface{}{
+	if err := DB.Table("tbl_categories").Where("image_path=? and (tenant_id is NULL or tenant_id = ?)", Imagepath).UpdateColumns(map[string]interface{}{
 		"image_path": ""}).Error; err != nil {
 
 		return err
@@ -448,7 +448,7 @@ func (cate CategoryModel) GetSubCategoryList(categories *[]TblCategories, offset
 	res := `WITH RECURSIVE cat_tree AS (
 		SELECT id, category_name, category_slug,image_path, parent_id,created_on,modified_on,is_deleted
 		FROM tbl_categories
-		WHERE id = ? and tenant_id = ?
+		WHERE id = ? and (tenant_id is NULL or tenant_id=?)
 		UNION ALL
 		SELECT cat.id, cat.category_name, cat.category_slug, cat.image_path ,cat.parent_id,cat.created_on,cat.modified_on,
 		cat.is_deleted
@@ -460,11 +460,11 @@ func (cate CategoryModel) GetSubCategoryList(categories *[]TblCategories, offset
 	if filter.Keyword != "" {
 
 		if limit == 0 {
-			query.Raw(` `+res+` select count(*) from cat_tree where is_deleted = 0 and parent_id != 0 and LOWER(TRIM(category_name)) LIKE LOWER(TRIM(?)) group by cat_tree.id `, parent_id, tenantid, "%"+filter.Keyword+"%").Count(&categorycount)
+			query.Raw(` `+res+` select count(*) from cat_tree where is_deleted = 0 and parent_id != 0 and LOWER(TRIM(category_name)) ILIKE LOWER(TRIM(?)) group by cat_tree.id `, parent_id, tenantid, "%"+filter.Keyword+"%").Count(&categorycount)
 
 			return categories, categorycount
 		}
-		query = query.Raw(` `+res+` select * from cat_tree where is_deleted = 0 and parent_id != 0 and LOWER(TRIM(category_name)) LIKE LOWER(TRIM(?)) limit ? offset ? `, parent_id, tenantid, "%"+filter.Keyword+"%", limit, offset)
+		query = query.Raw(` `+res+` select * from cat_tree where is_deleted = 0 and parent_id != 0 and LOWER(TRIM(category_name)) ILIKE LOWER(TRIM(?)) limit ? offset ? `, parent_id, tenantid, "%"+filter.Keyword+"%", limit, offset)
 	} else if flag == 0 {
 		query = query.Raw(``+res+` SELECT * FROM cat_tree where is_deleted = 0 and id not in (?) order by id desc limit ? offset ? `, parent_id, tenantid, parent_id, limit, offset)
 	} else if flag == 1 {
@@ -487,7 +487,7 @@ func (cate CategoryModel) GetSubCategoryList(categories *[]TblCategories, offset
 
 func (cate CategoryModel) DeleteCategoryByIds(category *TblCategories, categoryId []int, tenantid int, DB *gorm.DB) error {
 
-	if err := DB.Table("tbl_categories").Where("id in (?) and tenant_id = ?", categoryId, tenantid).Updates(TblCategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
+	if err := DB.Table("tbl_categories").Where("id in (?) and (tenant_id is NULL or tenant_id = ?)", categoryId, tenantid).Updates(TblCategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
 
 		return err
 
@@ -536,19 +536,19 @@ func (cate CategoryModel) MultiGetEntryCategoryids(entryCategory *TblChannelEntr
 // delete all categories
 func (cate CategoryModel) DeleteallCategoryByIds(category *TblCategories, categoryId []int, spacecatid []int, tenantid int, DB *gorm.DB) error {
 
-	if err := DB.Table("tbl_spaces").Where("page_category_id in (?) and tenant_id = ?", spacecatid, tenantid).Updates(TblCategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
+	if err := DB.Table("tbl_spaces").Where("page_category_id in (?) and (tenant_id is NULL or tenant_id = ?)", spacecatid, tenantid).Updates(TblCategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
 
 		fmt.Println(err)
 		// return err
 
 	}
 
-	if err := DB.Table("tbl_jobs").Where("categories_id in (?) and tenant_id = ?", spacecatid, tenantid).UpdateColumns(map[string]interface{}{"categories_id": 0}).Error; err != nil {
+	if err := DB.Table("tbl_jobs").Where("categories_id in (?) and (tenant_id is NULL or tenant_id = ?)", spacecatid, tenantid).UpdateColumns(map[string]interface{}{"categories_id": 0}).Error; err != nil {
 
 		return err
 	}
 
-	if err := DB.Table("tbl_categories").Where("id in(?) and tenant_id = ?", categoryId, tenantid).Updates(TblCategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
+	if err := DB.Table("tbl_categories").Where("id in(?) and (tenant_id is NULL or tenant_id = ?)", categoryId, tenantid).Updates(TblCategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
 
 		return err
 
@@ -584,7 +584,7 @@ func (cate CategoryModel) DeleteChannelCategoryids(channelCategory *TblChannelCa
 	for i := 0; i < len(channelId); i++ {
 		for j := 0; j < len(channelId[i]); j++ {
 			if categoryId == channelId[i][j] {
-				result := DB.Debug().Where("id = ? and tenant_id = ?", rowId[i]).Delete(&TblChannelCategorie{})
+				result := DB.Debug().Where("id = ? and (tenant_id is NULL or tenant_id = ?)", rowId[i]).Delete(&TblChannelCategorie{})
 				if result.Error != nil {
 					return result.Error
 				}
@@ -637,11 +637,21 @@ func (cate CategoryModel) GetEntryCategoryids(entryCategory *TblChannelEntrie, c
 
 func (cate CategoryModel) DeleteEntryCategoryids(channelCategory *TblChannelEntrie, entryId string, rowId int, DB *gorm.DB, tenantid int) error {
 
-	result := DB.Table("tbl_channel_entries").Where("id = ? and tenant_id= ?", rowId, tenantid).UpdateColumn("categories_id", entryId)
+	result := DB.Table("tbl_channel_entries").Where("id = ? and (tenant_id is NULL or tenant_id = ?)", rowId, tenantid).UpdateColumn("categories_id", entryId)
 
 	if result.Error != nil {
 
 		return result.Error
+	}
+
+	return nil
+}
+
+func (Cat CategoryModel) GetHierarchicalCategoriesMappedInEntries(categoryIds []string, categories *[]TblCategories, db *gorm.DB) (err error) {
+
+	if err := db.Debug().Raw("WITH RECURSIVE CATHIERARCHY AS ( SELECT C.ID,C.DESCRIPTION,C.IMAGE_PATH,C.PARENT_ID,C.CATEGORY_SLUG,C.CATEGORY_NAME,C.CREATED_ON,C.CREATED_BY,C.MODIFIED_ON,C.MODIFIED_BY,C.IS_DELETED,C.DELETED_ON FROM TBL_CATEGORIES AS C WHERE C.IS_DELETED = 0 AND C.ID::TEXT IN (?) UNION SELECT TC.ID,TC.DESCRIPTION,TC.IMAGE_PATH,TC.PARENT_ID,TC.CATEGORY_SLUG,TC.CATEGORY_NAME,TC.CREATED_ON,TC.CREATED_BY,TC.MODIFIED_ON,TC.MODIFIED_BY,TC.IS_DELETED,TC.DELETED_ON FROM TBL_CATEGORIES AS TC INNER JOIN CATHIERARCHY AS CH ON CH.PARENT_ID = TC.ID WHERE TC.IS_DELETED = 0) SELECT * FROM CATHIERARCHY AS CH ORDER BY CH.PARENT_ID", categoryIds).Find(&categories).Error; err != nil {
+
+		return err
 	}
 
 	return nil

@@ -43,6 +43,6 @@ func MigrationTables(db *gorm.DB) {
 		panic(err)
 	}
 
-	db.Exec(`INSERT INTO public.tbl_categories(id, category_name, category_slug, created_on, created_by,is_deleted, parent_id, description,tenant_id)	VALUES (1, 'Default Category', 'default_category', '2024-03-04 11:22:03', 1, 0, 0, 'Default_Category',1),(2, 'Default1', 'default1', '2024-03-04 11:22:03', 1, 0, 1, 'Default1',1);`)
+	db.Exec(`INSERT INTO public.tbl_categories(id, category_name, category_slug, created_on, created_by,is_deleted, parent_id, description)	VALUES (1, 'Default Category', 'default_category', '2024-03-04 11:22:03', 1, 0, 0, 'Default_Category'),(2, 'Default1', 'default1', '2024-03-04 11:22:03', 1, 0, 1, 'Default1');`)
 
 }
