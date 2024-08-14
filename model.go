@@ -1,7 +1,6 @@
 package categories
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 
@@ -536,17 +535,17 @@ func (cate CategoryModel) MultiGetEntryCategoryids(entryCategory *TblChannelEntr
 // delete all categories
 func (cate CategoryModel) DeleteallCategoryByIds(category *TblCategories, categoryId []int, spacecatid []int, tenantid int, DB *gorm.DB) error {
 
-	if err := DB.Table("tbl_spaces").Where("page_category_id in (?) and (tenant_id is NULL or tenant_id = ?)", spacecatid, tenantid).Updates(TblCategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
+	// if err := DB.Table("tbl_spaces").Where("page_category_id in (?) and (tenant_id is NULL or tenant_id = ?)", spacecatid, tenantid).Updates(TblCategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
 
-		fmt.Println(err)
-		// return err
+	// 	fmt.Println(err)
+	// 	// return err
 
-	}
+	// }
 
-	if err := DB.Table("tbl_jobs").Where("categories_id in (?) and (tenant_id is NULL or tenant_id = ?)", spacecatid, tenantid).UpdateColumns(map[string]interface{}{"categories_id": 0}).Error; err != nil {
+	// if err := DB.Table("tbl_jobs").Where("categories_id in (?) and (tenant_id is NULL or tenant_id = ?)", spacecatid, tenantid).UpdateColumns(map[string]interface{}{"categories_id": 0}).Error; err != nil {
 
-		return err
-	}
+	// 	return err
+	// }
 
 	if err := DB.Table("tbl_categories").Where("id in(?) and (tenant_id is NULL or tenant_id = ?)", categoryId, tenantid).Updates(TblCategories{IsDeleted: category.IsDeleted, DeletedOn: category.DeletedOn, DeletedBy: category.DeletedBy}).Error; err != nil {
 
@@ -584,7 +583,7 @@ func (cate CategoryModel) DeleteChannelCategoryids(channelCategory *TblChannelCa
 	for i := 0; i < len(channelId); i++ {
 		for j := 0; j < len(channelId[i]); j++ {
 			if categoryId == channelId[i][j] {
-				result := DB.Debug().Where("id = ? and (tenant_id is NULL or tenant_id = ?)", rowId[i],tenantid).Delete(&TblChannelCategorie{})
+				result := DB.Debug().Where("id = ? and (tenant_id is NULL or tenant_id = ?)", rowId[i], tenantid).Delete(&TblChannelCategorie{})
 				if result.Error != nil {
 					return result.Error
 				}
