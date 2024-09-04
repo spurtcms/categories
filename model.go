@@ -321,11 +321,11 @@ func (cate CategoryModel) GetCategoryTree(categoryID int, DB *gorm.DB, tenantid 
 			cat.modified_on,
 			cat.is_deleted
 			FROM tbl_categories AS cat
-			JOIN cat_tree ON cat.parent_id = cat_tree.id
+			JOIN cat_tree ON cat.parent_id = cat_tree.id and (cat.tenant_id is NULL or cat.tenant_id =?)
 		)
 		SELECT *
 		FROM cat_tree WHERE IS_DELETED = 0 order by id desc
-	`, categoryID, tenantid).Scan(&categories).Error
+	`, categoryID, tenantid,tenantid).Scan(&categories).Error
 	if err != nil {
 		return nil, err
 	}
@@ -452,22 +452,22 @@ func (cate CategoryModel) GetSubCategoryList(categories *[]TblCategories, offset
 		SELECT cat.id, cat.category_name, cat.category_slug, cat.image_path ,cat.parent_id,cat.created_on,cat.modified_on,
 		cat.is_deleted
 		FROM tbl_categories AS cat
-		JOIN cat_tree ON cat.parent_id = cat_tree.id )`
+		JOIN cat_tree ON cat.parent_id = cat_tree.id and (cat.tenant_id is NULL or cat.tenant_id = ?))`
 
 	query := DB
 
 	if filter.Keyword != "" {
 
 		if limit == 0 {
-			query.Raw(` `+res+` select count(*) from cat_tree where is_deleted = 0 and parent_id != 0 and LOWER(TRIM(category_name)) ILIKE LOWER(TRIM(?)) group by cat_tree.id `, parent_id, tenantid, "%"+filter.Keyword+"%").Count(&categorycount)
+			query.Raw(` `+res+` select count(*) from cat_tree where is_deleted = 0 and parent_id != 0 and LOWER(TRIM(category_name)) ILIKE LOWER(TRIM(?)) group by cat_tree.id `, parent_id, tenantid,tenantid, "%"+filter.Keyword+"%").Count(&categorycount)
 
 			return categories, categorycount
 		}
-		query = query.Raw(` `+res+` select * from cat_tree where is_deleted = 0 and parent_id != 0 and LOWER(TRIM(category_name)) ILIKE LOWER(TRIM(?)) limit ? offset ?  `, parent_id, tenantid, "%"+filter.Keyword+"%", limit, offset)
+		query = query.Raw(` `+res+` select * from cat_tree where is_deleted = 0 and parent_id != 0 and LOWER(TRIM(category_name)) ILIKE LOWER(TRIM(?)) limit ? offset ?  `, parent_id, tenantid,tenantid, "%"+filter.Keyword+"%", limit, offset)
 	} else if flag == 0 {
-		query = query.Raw(``+res+` SELECT * FROM cat_tree where is_deleted = 0 and id not in (?) order by id desc limit ? offset ? `, parent_id, tenantid, parent_id, limit, offset)
+		query = query.Raw(``+res+` SELECT * FROM cat_tree where is_deleted = 0 and id not in (?) order by id desc limit ? offset ? `, parent_id, tenantid,tenantid, parent_id, limit, offset)
 	} else if flag == 1 {
-		query = query.Raw(``+res+` SELECT * FROM cat_tree where is_deleted = 0 order by id desc`, parent_id, tenantid)
+		query = query.Raw(``+res+` SELECT * FROM cat_tree where is_deleted = 0 order by id desc`, parent_id, tenantid,tenantid)
 	}
 	if limit != 0 {
 
@@ -477,7 +477,7 @@ func (cate CategoryModel) GetSubCategoryList(categories *[]TblCategories, offset
 
 	} else {
 
-		DB.Raw(` `+res+` SELECT count(*) FROM cat_tree where is_deleted = 0 and id not in (?)  group by cat_tree.id order by id desc`, parent_id, tenantid, parent_id).Count(&categorycount)
+		DB.Raw(` `+res+` SELECT count(*) FROM cat_tree where is_deleted = 0 and id not in (?)  group by cat_tree.id order by id desc`, parent_id, tenantid,tenantid, parent_id).Count(&categorycount)
 
 		return categories, categorycount
 	}
