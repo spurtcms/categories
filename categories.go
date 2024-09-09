@@ -395,3 +395,31 @@ func (cate CategoryModel) MultiDeleteChannelCategoryids(channelCategory *TblChan
 
 	return nil
 }
+
+func (cat *Categories) CategoryList(limit, offset, categoryGrpId, hierarchyLevel, checkEntriesPresence, excludeGroup, excludeParent, tenantId int, categoryGrpSlug string) (CategoryList []TblCategories, Count int, err error) {
+
+	categories, count, err := Categorymodel.FlexibleCategoryList(limit, offset, categoryGrpId, hierarchyLevel, excludeGroup, excludeParent, checkEntriesPresence, tenantId, categoryGrpSlug, cat.DB)
+
+	if err != nil {
+
+		return []TblCategories{}, 0, err
+	}
+
+	var FinalCategoriesList []TblCategories
+
+	seenCategory := make(map[int]bool)
+
+	for _, category := range categories {
+
+		if !seenCategory[category.Id] {
+
+			FinalCategoriesList = append(FinalCategoriesList, category)
+
+			seenCategory[category.Id] = true
+		}
+	}
+
+	return FinalCategoriesList, int(count), nil
+
+}
+

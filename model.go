@@ -655,3 +655,96 @@ func (Cat CategoryModel) GetHierarchicalCategoriesMappedInEntries(categoryIds []
 
 	return nil
 }
+
+func (cat CategoryModel) FlexibleCategoryList(limit, offset, categoryGrpId, hierarchylevel, excludeGroup, excludeParent, checkEntriesPresence, tenantId int, categoryGrpSlug string, db *gorm.DB) (categories []TblCategories, count int64, err error) {
+
+	var (
+		hierarchyString, fromHierarchyString, selectHierarchyString            string
+		outerLevel, limitString, offsetString, createOnlyString                string
+		categoryString, selectParentRemove, removeGroup, EntryMappedCategories string
+	)
+
+	if cat.DataAccess == 1 {
+
+		createOnlyString = ` and ct.created_by = ` + strconv.Itoa(cat.Userid)
+	}
+
+	if excludeGroup == 1 {
+
+		removeGroup = `and ct.parent_id != 0`
+	}
+
+	if checkEntriesPresence == 1 {
+
+		var joinCondition string
+
+		if db.Config.Dialector.Name() == "mysql" {
+
+			joinCondition = `find_in_set(ct.id,ce.categories_id) > 0`
+
+		} else if db.Config.Dialector.Name() == "postgres" {
+
+			joinCondition = `ct.id = any(string_to_array(ce.categories_id,',')::Integer[])`
+		}
+
+		EntryMappedCategories = `inner join tbl_channel_entries as ce on ` + joinCondition + ` and ce.is_deleted = 0`
+	}
+
+	if categoryGrpId != 0 {
+
+		categoryString = `Where id = ` + strconv.Itoa(categoryGrpId)
+
+		if excludeParent == 1 {
+
+			selectParentRemove = `And ct.id != ` + strconv.Itoa(categoryGrpId)
+		}
+
+	} else if categoryGrpSlug != "" {
+
+		categoryString = `where id = (select id from tbl_categories where is_deleted = 0 and category_slug = '` + categoryGrpSlug + `')`
+
+		if excludeParent == 1 {
+
+			selectParentRemove = `And ct.id != (select id from tbl_categories where is_deleted = 0 and category_slug = '` + categoryGrpSlug + `')`
+		}
+	}
+
+	if hierarchylevel != 0 {
+
+		hierarchyString = ` where cat_tree.level < ` + strconv.Itoa(hierarchylevel)
+
+		fromHierarchyString = `,cat_tree.level + 1`
+
+		selectHierarchyString = `,0 as level`
+
+		outerLevel = ` and level = ` + strconv.Itoa(hierarchylevel)
+
+	}
+
+	if limit > 0 {
+
+		limitString = `limit ` + strconv.Itoa(limit)
+	}
+
+	if offset > -1 {
+
+		offsetString = ` offset ` + strconv.Itoa(offset)
+	}
+
+	var convTenantId = strconv.Itoa(tenantId)
+
+	res := `with recursive cat_tree AS (
+	select id, category_name, category_slug, description,image_path, parent_id, created_on,modified_on, modified_by,is_deleted,tenant_id` + selectHierarchyString + ` from tbl_categories ` + categoryString + ` union select tbl_categories.id, tbl_categories.category_name, tbl_categories.category_slug,tbl_categories.description, tbl_categories.image_path, tbl_categories.parent_id, tbl_categories.created_on,tbl_categories.modified_on,tbl_categories.modified_by,tbl_categories.is_deleted,tbl_categories.tenant_id` + fromHierarchyString + ` from tbl_categories join cat_tree on tbl_categories.parent_id = cat_tree.id` + hierarchyString + createOnlyString + ` )`
+
+	if err := db.Debug().Raw(` ` + res + `select ct.* from cat_tree as ct ` + EntryMappedCategories + ` where ct.is_deleted = 0  and (ct.tenant_id =` + convTenantId + ` or ct.tenant_id is NULL)` + selectParentRemove + ` ` + outerLevel + ` ` + removeGroup + ` order by ct.id desc ` + limitString + offsetString).Find(&categories).Error; err != nil {
+
+		return []TblCategories{}, 0, err
+	}
+
+	if err := db.Debug().Raw(` ` + res + `select count(distinct(ct.id)) from cat_tree as ct ` + EntryMappedCategories + ` where ct.is_deleted = 0 and (ct.tenant_id =` + convTenantId + ` or ct.tenant_id is NULL)` + selectParentRemove + outerLevel + ` ` + removeGroup + ` group by ct.id order by ct.id desc`).Count(&count).Error; err != nil {
+
+		return []TblCategories{}, 0, err
+	}
+
+	return categories, count, nil
+}
