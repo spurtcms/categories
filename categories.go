@@ -396,9 +396,9 @@ func (cate CategoryModel) MultiDeleteChannelCategoryids(channelCategory *TblChan
 	return nil
 }
 
-func (cat *Categories) CategoryList(limit, offset, categoryGrpId, hierarchyLevel, checkEntriesPresence, excludeGroup, excludeParent, tenantId int, categoryGrpSlug string) (CategoryList []TblCategories, Count int, err error) {
+func (cat *Categories) CategoryList(limit, offset, categoryGrpId, hierarchyLevel, tenantId int, checkEntriesPresence, excludeGroup, excludeParent, exactLevelOnly bool, categoryGrpSlug string) (CategoryList []TblCategories, Count int, err error) {
 
-	categories, count, err := Categorymodel.FlexibleCategoryList(limit, offset, categoryGrpId, hierarchyLevel, excludeGroup, excludeParent, checkEntriesPresence, tenantId, categoryGrpSlug, cat.DB)
+	categories, count, err := Categorymodel.FlexibleCategoryList(limit, offset, categoryGrpId, hierarchyLevel,tenantId, excludeGroup, excludeParent, checkEntriesPresence,exactLevelOnly, categoryGrpSlug,cat.DB)
 
 	if err != nil {
 
