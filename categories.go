@@ -2,6 +2,7 @@ package categories
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -250,11 +251,22 @@ func (cate *Categories) AddCategory(req CategoryCreate) error {
 		return ErrorCategoryName
 	}
 
-	var category TblCategories
+	var (
+		category     TblCategories
+		categorySlug string
+	)
 
 	category.CategoryName = req.CategoryName
 
-	category.CategorySlug = strings.ToLower(strings.ReplaceAll(strings.TrimRight(req.CategoryName, " "), " ", "-"))
+	categorySlug = strings.ToLower(strings.ReplaceAll(req.CategoryName, " ", "-"))
+
+	categorySlug = regexp.MustCompile(`[^a-zA-Z0-9]+`).ReplaceAllString(categorySlug, "-")
+
+	categorySlug = regexp.MustCompile(`-+`).ReplaceAllString(categorySlug, "-")
+
+	categorySlug = strings.Trim(categorySlug, "-")
+	
+	category.CategorySlug = categorySlug
 
 	category.Description = req.Description
 
@@ -263,7 +275,7 @@ func (cate *Categories) AddCategory(req CategoryCreate) error {
 	category.CreatedBy = req.CreatedBy
 
 	category.ParentId = req.ParentId
-	
+
 	category.TenantId = req.TenantId
 
 	category.CreatedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
@@ -292,9 +304,16 @@ func (cate *Categories) UpdateSubCategory(req CategoryCreate, tenantid int) erro
 		return ErrorCategoryName
 	}
 
-	var category TblCategories
+	var (
+		category     TblCategories
+		categorySlug string
+	)
 	category.CategoryName = req.CategoryName
-	category.CategorySlug = strings.ToLower(strings.ReplaceAll(strings.TrimRight(req.CategoryName, " "), " ", "-"))
+	categorySlug = strings.ToLower(strings.ReplaceAll(req.CategoryName, " ", "-"))
+	categorySlug = regexp.MustCompile(`[^a-zA-Z0-9]+`).ReplaceAllString(categorySlug, "-")
+	categorySlug = regexp.MustCompile(`-+`).ReplaceAllString(categorySlug, "-")
+	categorySlug = strings.Trim(categorySlug, "-")
+	category.CategorySlug = categorySlug
 	category.Description = req.Description
 	category.ImagePath = req.ImagePath
 	category.ParentId = req.ParentId
@@ -398,7 +417,7 @@ func (cate CategoryModel) MultiDeleteChannelCategoryids(channelCategory *TblChan
 
 func (cat *Categories) CategoryList(limit, offset, categoryGrpId, hierarchyLevel, tenantId int, checkEntriesPresence, excludeGroup, excludeParent, exactLevelOnly bool, channelSlug, categoryGrpSlug string) (CategoryList []TblCategories, Count int, err error) {
 
-	categories, count, err := Categorymodel.FlexibleCategoryList(limit, offset, categoryGrpId, hierarchyLevel, tenantId, excludeGroup, excludeParent, checkEntriesPresence, exactLevelOnly,channelSlug, categoryGrpSlug, cat.DB)
+	categories, count, err := Categorymodel.FlexibleCategoryList(limit, offset, categoryGrpId, hierarchyLevel, tenantId, excludeGroup, excludeParent, checkEntriesPresence, exactLevelOnly, channelSlug, categoryGrpSlug, cat.DB)
 
 	if err != nil {
 

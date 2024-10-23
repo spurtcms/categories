@@ -2,6 +2,7 @@ package categories
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -46,18 +47,29 @@ func (cat *Categories) CreateCategoryGroup(req CategoryCreate) error {
 		return ErrorCategoryName
 	}
 
-	var category TblCategories
+	var(
+	    category TblCategories
+		categorySlug string
+	)
 
 	category.CategoryName = req.CategoryName
 
-	category.CategorySlug = strings.ToLower(strings.ReplaceAll(strings.TrimRight(req.CategoryName, " "), " ", "-"))
+	categorySlug = strings.ToLower(strings.ReplaceAll(req.CategoryName, " ", "-"))
+
+	categorySlug = regexp.MustCompile(`[^a-zA-Z0-9]+`).ReplaceAllString(categorySlug, "-")
+
+	categorySlug = regexp.MustCompile(`-+`).ReplaceAllString(categorySlug, "-")
+
+	categorySlug = strings.Trim(categorySlug, "-")
+
+	category.CategorySlug = categorySlug
 
 	category.Description = req.Description
 
 	category.CreatedBy = req.CreatedBy
 
 	category.ParentId = 0
-	
+
 	category.TenantId = req.TenantId
 
 	category.CreatedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
@@ -85,7 +97,11 @@ func (cat *Categories) UpdateCategoryGroup(req CategoryCreate, tenantid int) err
 
 		return ErrorCategoryName
 	}
-	var category TblCategories
+
+	var(
+	    category TblCategories
+		categorySlug string
+	)
 
 	category.Id = req.Id
 
@@ -93,7 +109,15 @@ func (cat *Categories) UpdateCategoryGroup(req CategoryCreate, tenantid int) err
 
 	category.Description = req.Description
 
-	category.CategorySlug = strings.ToLower(strings.ReplaceAll(strings.TrimRight(req.CategoryName, " "), " ", "-"))
+	categorySlug = strings.ToLower(strings.ReplaceAll(req.CategoryName, " ", "-"))
+
+	categorySlug = regexp.MustCompile(`[^a-zA-Z0-9]+`).ReplaceAllString(categorySlug, "-")
+
+	categorySlug = regexp.MustCompile(`-+`).ReplaceAllString(categorySlug, "-")
+
+	categorySlug = strings.Trim(categorySlug, "-")
+
+	category.CategorySlug = categorySlug
 
 	category.ModifiedBy = req.ModifiedBy
 
@@ -129,12 +153,12 @@ func (cat *Categories) DeleteCategoryGroup(Categoryid int, modifiedby int, tenan
 		individualid = append(individualid, indivi)
 	}
 
-	derr := DeleteGroupchannelcategoryid(Categoryid,cat.DB,tenantid)
+	derr := DeleteGroupchannelcategoryid(Categoryid, cat.DB, tenantid)
 	if derr != nil {
 		fmt.Println(derr)
 	}
 
-	dcat := DeleteGroupEntriesCategoryid(Categoryid,cat.DB,tenantid )
+	dcat := DeleteGroupEntriesCategoryid(Categoryid, cat.DB, tenantid)
 	if derr != nil {
 		fmt.Println(dcat)
 	}
