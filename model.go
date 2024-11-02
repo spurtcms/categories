@@ -141,7 +141,7 @@ func (categories CategoryModel) CategoryGroupList(offset int, limit int, filter 
 
 	if filter.Keyword != "" {
 
-		query = query.Where("LOWER(TRIM(category_name)) ILIKE LOWER(TRIM(?))", "%"+filter.Keyword+"%")
+		query = query.Where("LOWER(TRIM(category_name)) like LOWER(TRIM(?))", "%"+filter.Keyword+"%")
 	}
 
 	if limit != 0 {
@@ -260,12 +260,12 @@ func (cate CategoryModel) GetCategoryList(categ CategoriesListReq, flag int, DB 
 	if categ.Keyword != "" {
 
 		if categ.Limit == 0 {
-			query.Raw(` `+res+` select count(count(distinct(cat_tree.id))) from cat_tree where is_deleted = 0 and LOWER(TRIM(category_name)) ILIKE LOWER(TRIM(?)) group by cat_tree.id and  tenant_id = ?`, "%"+categ.Keyword+"%", tenantid).Count(&categorycount)
+			query.Raw(` `+res+` select count(count(distinct(cat_tree.id))) from cat_tree where is_deleted = 0 and LOWER(TRIM(category_name)) like LOWER(TRIM(?)) group by cat_tree.id and  tenant_id = ?`, "%"+categ.Keyword+"%", tenantid).Count(&categorycount)
 
 			return categorylist, categorycount
 		}
 
-		query = query.Raw(` `+res+` select distinct(cat_tree.id),cat_tree.* from cat_tree where is_deleted = 0 `+selectGroupRemove+outerlevel+onlycategories+` and  tenant_id = ? and LOWER(TRIM(category_name)) ILIKE LOWER(TRIM(?)) limit(?) offset(?) `, tenantid, "%"+categ.Keyword+"%", categ.Limit, categ.Offset)
+		query = query.Raw(` `+res+` select distinct(cat_tree.id),cat_tree.* from cat_tree where is_deleted = 0 `+selectGroupRemove+outerlevel+onlycategories+` and  tenant_id = ? and LOWER(TRIM(category_name)) like LOWER(TRIM(?)) limit(?) offset(?) `, tenantid, "%"+categ.Keyword+"%", categ.Limit, categ.Offset)
 
 	} else if flag == 0 {
 
@@ -459,11 +459,11 @@ func (cate CategoryModel) GetSubCategoryList(categories *[]TblCategories, offset
 	if filter.Keyword != "" {
 
 		if limit == 0 {
-			query.Raw(` `+res+` select count(*) from cat_tree where is_deleted = 0 and parent_id != 0 and LOWER(TRIM(category_name)) ILIKE LOWER(TRIM(?)) group by cat_tree.id `, parent_id, tenantid, tenantid, "%"+filter.Keyword+"%").Count(&categorycount)
+			query.Raw(` `+res+` select count(*) from cat_tree where is_deleted = 0 and parent_id != 0 and LOWER(TRIM(category_name)) LIKE LOWER(TRIM(?)) group by cat_tree.id `, parent_id, tenantid, tenantid, "%"+filter.Keyword+"%").Count(&categorycount)
 
 			return categories, categorycount
 		}
-		query = query.Raw(` `+res+` select * from cat_tree where is_deleted = 0 and parent_id != 0 and LOWER(TRIM(category_name)) ILIKE LOWER(TRIM(?)) limit ? offset ?  `, parent_id, tenantid, tenantid, "%"+filter.Keyword+"%", limit, offset)
+		query = query.Raw(` `+res+` select * from cat_tree where is_deleted = 0 and parent_id != 0 and LOWER(TRIM(category_name)) LIKE LOWER(TRIM(?)) limit ? offset ?  `, parent_id, tenantid, tenantid, "%"+filter.Keyword+"%", limit, offset)
 	} else if flag == 0 {
 		query = query.Raw(``+res+` SELECT * FROM cat_tree where is_deleted = 0 and id not in (?) order by id desc limit ? offset ? `, parent_id, tenantid, tenantid, parent_id, limit, offset)
 	} else if flag == 1 {
@@ -646,9 +646,22 @@ func (cate CategoryModel) DeleteEntryCategoryids(channelCategory *TblChannelEntr
 	return nil
 }
 
-func (Cat CategoryModel) GetHierarchicalCategoriesMappedInEntries(categoryIds []string, categories *[]TblCategories, db *gorm.DB) (err error) {
+func (Cat CategoryModel) GetHierarchicalCategoriesMappedInEntries(categoryIds []string, categories *[]TblCategories, db *gorm.DB, dbType string) (err error) {
 
-	if err := db.Debug().Raw("WITH RECURSIVE CATHIERARCHY AS ( SELECT C.ID,C.DESCRIPTION,C.IMAGE_PATH,C.PARENT_ID,C.CATEGORY_SLUG,C.CATEGORY_NAME,C.CREATED_ON,C.CREATED_BY,C.MODIFIED_ON,C.MODIFIED_BY,C.IS_DELETED,C.DELETED_ON FROM TBL_CATEGORIES AS C WHERE C.IS_DELETED = 0 AND C.ID::TEXT IN (?) UNION SELECT TC.ID,TC.DESCRIPTION,TC.IMAGE_PATH,TC.PARENT_ID,TC.CATEGORY_SLUG,TC.CATEGORY_NAME,TC.CREATED_ON,TC.CREATED_BY,TC.MODIFIED_ON,TC.MODIFIED_BY,TC.IS_DELETED,TC.DELETED_ON FROM TBL_CATEGORIES AS TC INNER JOIN CATHIERARCHY AS CH ON CH.PARENT_ID = TC.ID WHERE TC.IS_DELETED = 0) SELECT * FROM CATHIERARCHY AS CH ORDER BY CH.PARENT_ID", categoryIds).Find(&categories).Error; err != nil {
+	var condition string
+
+	switch {
+
+	case dbType == "postgres":
+
+		condition = `C.ID::TEXT`
+
+	case dbType == "mysql":
+
+		condition = `CAST(C.ID AS CHAR)`
+	}
+
+	if err := db.Debug().Raw("WITH RECURSIVE CATHIERARCHY AS ( SELECT C.ID,C.DESCRIPTION,C.IMAGE_PATH,C.PARENT_ID,C.CATEGORY_SLUG,C.CATEGORY_NAME,C.CREATED_ON,C.CREATED_BY,C.MODIFIED_ON,C.MODIFIED_BY,C.IS_DELETED,C.DELETED_ON FROM tbl_categories AS C WHERE C.IS_DELETED = 0 AND "+condition+" IN (?) UNION SELECT TC.ID,TC.DESCRIPTION,TC.IMAGE_PATH,TC.PARENT_ID,TC.CATEGORY_SLUG,TC.CATEGORY_NAME,TC.CREATED_ON,TC.CREATED_BY,TC.MODIFIED_ON,TC.MODIFIED_BY,TC.IS_DELETED,TC.DELETED_ON FROM tbl_categories AS TC INNER JOIN CATHIERARCHY AS CH ON CH.PARENT_ID = TC.ID WHERE TC.IS_DELETED = 0) SELECT * FROM CATHIERARCHY AS CH ORDER BY CH.PARENT_ID", categoryIds).Find(&categories).Error; err != nil {
 
 		return err
 	}
@@ -688,7 +701,7 @@ func (cat CategoryModel) FlexibleCategoryList(limit, offset, categoryGrpId, hier
 			joinCondition = ` ct.id = any(string_to_array(tcc.category_id,',')::Integer[])`
 		}
 
-		chanBasedCategories = `inner join tbl_channel_categories as tcc on `+ joinCondition+ `inner join tbl_channels as tc on tc.id = tcc.channel_id and tc.slug_name ='`+channelSlug+`'`
+		chanBasedCategories = `inner join tbl_channel_categories as tcc on ` + joinCondition + `inner join tbl_channels as tc on tc.id = tcc.channel_id and tc.slug_name ='` + channelSlug + `'`
 	}
 
 	if checkEntriesPresence {
@@ -754,12 +767,12 @@ func (cat CategoryModel) FlexibleCategoryList(limit, offset, categoryGrpId, hier
 	res := `with recursive cat_tree AS (
 	select id, category_name, category_slug, description,image_path, parent_id, created_on,modified_on, modified_by,is_deleted,tenant_id` + selectHierarchyString + ` from tbl_categories where ` + categoryString + ` tenant_id = ` + convTenantId + ` union select tbl_categories.id, tbl_categories.category_name, tbl_categories.category_slug,tbl_categories.description, tbl_categories.image_path, tbl_categories.parent_id, tbl_categories.created_on,tbl_categories.modified_on,tbl_categories.modified_by,tbl_categories.is_deleted,tbl_categories.tenant_id` + fromHierarchyString + ` from tbl_categories join cat_tree on tbl_categories.parent_id = cat_tree.id where tbl_categories.tenant_id = ` + convTenantId + hierarchyString + ` )`
 
-	if err := db.Debug().Raw(` ` + res + `select ct.* from cat_tree as ct `+ chanBasedCategories + EntryMappedCategories + ` where ct.is_deleted = 0  and ct.tenant_id =` + convTenantId + ` ` + selectParentRemove + ` ` + exactLevel + ` ` + removeGroup + ` ` + createOnlyString + ` order by ct.id desc ` + limitString + offsetString).Find(&categories).Error; err != nil {
+	if err := db.Debug().Raw(` ` + res + `select ct.* from cat_tree as ct ` + chanBasedCategories + EntryMappedCategories + ` where ct.is_deleted = 0  and ct.tenant_id =` + convTenantId + ` ` + selectParentRemove + ` ` + exactLevel + ` ` + removeGroup + ` ` + createOnlyString + ` order by ct.id desc ` + limitString + offsetString).Find(&categories).Error; err != nil {
 
 		return []TblCategories{}, 0, err
 	}
 
-	if err := db.Debug().Raw(` ` + res + `select count(distinct(ct.id)) from cat_tree as ct `+ chanBasedCategories + EntryMappedCategories + ` where ct.is_deleted = 0 and ct.tenant_id =` + convTenantId + ` ` + selectParentRemove + ` ` + exactLevel + ` ` + removeGroup + ` ` + createOnlyString + ` group by ct.id order by ct.id desc`).Count(&count).Error; err != nil {
+	if err := db.Debug().Raw(` ` + res + `select count(distinct(ct.id)) from cat_tree as ct ` + chanBasedCategories + EntryMappedCategories + ` where ct.is_deleted = 0 and ct.tenant_id =` + convTenantId + ` ` + selectParentRemove + ` ` + exactLevel + ` ` + removeGroup + ` ` + createOnlyString + ` group by ct.id order by ct.id desc`).Count(&count).Error; err != nil {
 
 		return []TblCategories{}, 0, err
 	}
