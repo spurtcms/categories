@@ -132,7 +132,7 @@ func (categories CategoryModel) CategoryGroupList(offset int, limit int, filter 
 
 	var categorycount int64
 
-	query := DB.Table("tbl_categories").Where("is_deleted = 0 and parent_id=0 and  tenant_id = ?", tenantid).Order("modified_on desc")
+	query := DB.Table("tbl_categories").Where("is_deleted = 0 and parent_id=0 and  tenant_id = ?", tenantid).Order("tbl_categories.created_on desc")
 
 	if createonly && categories.DataAccess == 1 {
 
