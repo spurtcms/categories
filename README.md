@@ -56,13 +56,14 @@ func main() {
 	if permisison {
 
 		//list categorygroup
-		Categorygrouplist, count, err := Category.CategoryGroupList(10, 0, categories.Filter{})
+		Categorygrouplist, count, err := Category.CategoryGroupList(10, 0, categories.Filter{},1,1)
 		fmt.Println(Categorygrouplist, count, err)
 
 		//create categorygroup
 		cerr := Category.CreateCategoryGroup(categories.CategoryCreate{
 			CategoryName: "Default Group",
 			CategorySlug: "default_group",
+			TenantId: 1
 		})
 
 		if cerr != nil {
@@ -75,6 +76,7 @@ func main() {
 			Id:           1,
 			CategoryName: "Default Group",
 			CategorySlug: "default_group",
+			TenantId: 1
 		})
 
 		if uerr != nil {
@@ -83,7 +85,7 @@ func main() {
 		}
 
 		// delete categorygroup
-		derr := Category.DeleteCategoryGroup(1,1)
+		derr := Category.DeleteCategoryGroup(1,1,1)
 
 		if derr != nil {
 
@@ -96,7 +98,7 @@ func main() {
 	if cpermisison {
 
 		//category list
-		Categorylist, fnlist, parentcategory, count, err := Category.ListCategory(categories.CategoriesListReq{Limit: 10, Offset: 0})
+		Categorylist, fnlist, parentcategory, count, err := Category.ListCategory(10, 0, Filter{},1,1)
 		fmt.Println(Categorylist, fnlist, parentcategory, count, err)
 
 		//create category
@@ -104,6 +106,7 @@ func main() {
 			CategoryName: "Default Category",
 			 CategorySlug: "default_category",
 			  ParentId: 1,
+			  TenantId:1
 			})
 
 			if cerr != nil {
@@ -117,7 +120,7 @@ func main() {
 			CategoryName: "Default Category",
 			CategorySlug: "default_category",
 			ParentId: 2,
-		})
+		},1)
 
 		if uerr != nil {
 
@@ -125,7 +128,7 @@ func main() {
 		}
 
 		//delete category
-		derr := Category.DeleteSubCategory(2, 1)
+		derr := Category.DeleteSubCategory(2, 1,1)
 
 		if derr != nil {
 
