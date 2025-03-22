@@ -63,7 +63,7 @@ func TestCategoryGroupList(t *testing.T) {
 
 	Auth.VerifyToken(token, SecretKey)
 
-	permisison, _ := Auth.IsGranted("Categories Group", auth.CRUD, 1)
+	permisison, _ := Auth.IsGranted("Categories Group", auth.CRUD, "1")
 
 	Category := CategoriesSetup(Config{
 		DB:               db,
@@ -73,7 +73,7 @@ func TestCategoryGroupList(t *testing.T) {
 	})
 	if permisison {
 
-		Categorygrouplist, count, err := Category.CategoryGroupList(10, 0, Filter{}, 1)
+		Categorygrouplist, count, err := Category.CategoryGroupList(10, 0, Filter{}, "1")
 
 		if err != nil {
 
@@ -99,7 +99,7 @@ func TestCreateCategoryGroup(t *testing.T) {
 		AuthEnable:       false,
 		PermissionEnable: false,
 	})
-	err := Category.CreateCategoryGroup(CategoryCreate{CategoryName: "indoor-sports", CategorySlug: "indoor_sports", Description: "type of indoor sports", TenantId: 1})
+	err := Category.CreateCategoryGroup(CategoryCreate{CategoryName: "indoor-sports", CategorySlug: "indoor_sports", Description: "type of indoor sports", TenantId: "1"})
 
 	if err != nil {
 
@@ -118,7 +118,7 @@ func TestUpdateCategoryGroup(t *testing.T) {
 		AuthEnable:       false,
 		PermissionEnable: false,
 	})
-	err := Category.UpdateCategoryGroup(CategoryCreate{Id: 1, CategoryName: "Default Category", CategorySlug: "default_category", Description: "Default Category"}, 1)
+	err := Category.UpdateCategoryGroup(CategoryCreate{Id: 1, CategoryName: "Default Category", CategorySlug: "default_category", Description: "Default Category"}, "1")
 
 	if err != nil {
 
@@ -137,7 +137,7 @@ func TestDeleteCategoryGroup(t *testing.T) {
 		AuthEnable:       false,
 		PermissionEnable: false,
 	})
-	err := Category.DeleteCategoryGroup(1, 1, 1)
+	err := Category.DeleteCategoryGroup(1, 1, "1")
 
 	if err != nil {
 

@@ -14,12 +14,12 @@ func TestListCategory(t *testing.T) {
 	db, _ := DBSetup()
 
 	config := auth.Config{
-		UserId:     1,
+		UserId: 1,
 		// ExpiryTime: 2,
-		ExpiryFlg:  false,
-		SecretKey:  "Secret123",
-		DB:         db,
-		RoleId:     2,
+		ExpiryFlg: false,
+		SecretKey: "Secret123",
+		DB:        db,
+		RoleId:    2,
 	}
 
 	Auth := auth.AuthSetup(config)
@@ -28,7 +28,7 @@ func TestListCategory(t *testing.T) {
 
 	Auth.VerifyToken(token, SecretKey)
 
-	permisison, _ := Auth.IsGranted("Categories", auth.CRUD,1)
+	permisison, _ := Auth.IsGranted("Categories", auth.CRUD, "1")
 
 	Category := CategoriesSetup(Config{
 		DB:               db,
@@ -38,7 +38,7 @@ func TestListCategory(t *testing.T) {
 	})
 	if permisison {
 
-		Categorylist, fnlist, parentcategory, count, err := Category.ListCategory(10,0,Filter{},1,1)
+		Categorylist, fnlist, parentcategory, count, err := Category.ListCategory(10, 0, Filter{}, 1, "1")
 
 		if err != nil {
 
@@ -64,7 +64,7 @@ func TestAddCategory(t *testing.T) {
 		AuthEnable:       false,
 		PermissionEnable: false,
 	})
-	err := Category.AddCategory(CategoryCreate{CategoryName: "Default", CategorySlug: "default", ParentId: 1,TenantId: 1})
+	err := Category.AddCategory(CategoryCreate{CategoryName: "Default", CategorySlug: "default", ParentId: 1, TenantId: "1"})
 
 	if err != nil {
 
@@ -83,7 +83,7 @@ func TestUpdateSubCategory(t *testing.T) {
 		AuthEnable:       false,
 		PermissionEnable: false,
 	})
-	err := Category.UpdateSubCategory(CategoryCreate{Id: 10, CategoryName: "Default", CategorySlug: "default", ParentId: 2},1)
+	err := Category.UpdateSubCategory(CategoryCreate{Id: 10, CategoryName: "Default", CategorySlug: "default", ParentId: 2}, "1")
 
 	if err != nil {
 
@@ -102,7 +102,7 @@ func TestDeleteSubCategory(t *testing.T) {
 		AuthEnable:       false,
 		PermissionEnable: false,
 	})
-	err := Category.DeleteSubCategory(2, 1,1)
+	err := Category.DeleteSubCategory(2, 1, "1")
 
 	if err != nil {
 
@@ -121,7 +121,7 @@ func TestGetSubCategoryDetails(t *testing.T) {
 		AuthEnable:       false,
 		PermissionEnable: false,
 	})
-	category, err := Category.GetSubCategoryDetails(2,1)
+	category, err := Category.GetSubCategoryDetails(2, "1")
 
 	if err != nil {
 

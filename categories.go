@@ -25,7 +25,7 @@ func CategoriesSetup(config Config) *Categories {
 }
 
 /*ListCategory*/
-func (cate *Categories) ListCategory(offset int, limit int, filter Filter, parent_id int, tenantid int) (tblcat []TblCategories, categories []TblCategories, parentcategory TblCategories, categorycount int64, err error) {
+func (cate *Categories) ListCategory(offset int, limit int, filter Filter, parent_id int, tenantid string) (tblcat []TblCategories, categories []TblCategories, parentcategory TblCategories, categorycount int64, err error) {
 
 	if Autherr := AuthandPermission(cate); Autherr != nil {
 
@@ -265,7 +265,7 @@ func (cate *Categories) AddCategory(req CategoryCreate) error {
 	categorySlug = regexp.MustCompile(`-+`).ReplaceAllString(categorySlug, "-")
 
 	categorySlug = strings.Trim(categorySlug, "-")
-	
+
 	category.CategorySlug = categorySlug
 
 	category.Description = req.Description
@@ -292,7 +292,7 @@ func (cate *Categories) AddCategory(req CategoryCreate) error {
 }
 
 /*Update Sub category*/
-func (cate *Categories) UpdateSubCategory(req CategoryCreate, tenantid int) error {
+func (cate *Categories) UpdateSubCategory(req CategoryCreate, tenantid string) error {
 
 	if Autherr := AuthandPermission(cate); Autherr != nil {
 
@@ -332,7 +332,7 @@ func (cate *Categories) UpdateSubCategory(req CategoryCreate, tenantid int) erro
 }
 
 /*Delete Sub Category*/
-func (cate *Categories) DeleteSubCategory(categoryid int, modifiedby int, tenantid int) error {
+func (cate *Categories) DeleteSubCategory(categoryid int, modifiedby int, tenantid string) error {
 
 	if Autherr := AuthandPermission(cate); Autherr != nil {
 		return Autherr
@@ -363,7 +363,7 @@ func (cate *Categories) DeleteSubCategory(categoryid int, modifiedby int, tenant
 }
 
 // Get Sub Category List
-func (cate *Categories) GetSubCategoryDetails(categoryid int, tenantid int) (categorys TblCategories, err error) {
+func (cate *Categories) GetSubCategoryDetails(categoryid int, tenantid string) (categorys TblCategories, err error) {
 
 	if Autherr := AuthandPermission(cate); Autherr != nil {
 		return TblCategories{}, Autherr
@@ -380,7 +380,7 @@ func (cate *Categories) GetSubCategoryDetails(categoryid int, tenantid int) (cat
 }
 
 /*Remove entries cover image if media image delete*/
-func (cate *Categories) UpdateImagePath(ImagePath string, tenantid int) error {
+func (cate *Categories) UpdateImagePath(ImagePath string, tenantid string) error {
 
 	if Autherr := AuthandPermission(cate); Autherr != nil {
 		return Autherr
@@ -415,7 +415,7 @@ func (cate CategoryModel) MultiDeleteChannelCategoryids(channelCategory *TblChan
 	return nil
 }
 
-func (cat *Categories) CategoryList(limit, offset, categoryGrpId, hierarchyLevel, tenantId int, checkEntriesPresence, excludeGroup, excludeParent, exactLevelOnly bool, channelSlug, categoryGrpSlug string) (CategoryList []TblCategories, Count int, err error) {
+func (cat *Categories) CategoryList(limit, offset, categoryGrpId, hierarchyLevel int, tenantId string, checkEntriesPresence, excludeGroup, excludeParent, exactLevelOnly bool, channelSlug, categoryGrpSlug string) (CategoryList []TblCategories, Count int, err error) {
 
 	categories, count, err := Categorymodel.FlexibleCategoryList(limit, offset, categoryGrpId, hierarchyLevel, tenantId, excludeGroup, excludeParent, checkEntriesPresence, exactLevelOnly, channelSlug, categoryGrpSlug, cat.DB)
 
@@ -441,4 +441,3 @@ func (cat *Categories) CategoryList(limit, offset, categoryGrpId, hierarchyLevel
 	return FinalCategoriesList, int(count), nil
 
 }
-

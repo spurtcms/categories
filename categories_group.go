@@ -11,7 +11,7 @@ import (
 )
 
 /*List Category Group*/
-func (cat *Categories) CategoryGroupList(limit int, offset int, filter Filter, tenantid int) (Categorylist []TblCategories, categorycount int64, err error) {
+func (cat *Categories) CategoryGroupList(limit int, offset int, filter Filter, tenantid string) (Categorylist []TblCategories, categorycount int64, err error) {
 
 	if AuthError := AuthandPermission(cat); AuthError != nil {
 
@@ -47,8 +47,8 @@ func (cat *Categories) CreateCategoryGroup(req CategoryCreate) error {
 		return ErrorCategoryName
 	}
 
-	var(
-	    category TblCategories
+	var (
+		category     TblCategories
 		categorySlug string
 	)
 
@@ -86,7 +86,7 @@ func (cat *Categories) CreateCategoryGroup(req CategoryCreate) error {
 }
 
 /*UpdateCategoryGroup*/
-func (cat *Categories) UpdateCategoryGroup(req CategoryCreate, tenantid int) error {
+func (cat *Categories) UpdateCategoryGroup(req CategoryCreate, tenantid string) error {
 
 	if AuthError := AuthandPermission(cat); AuthError != nil {
 
@@ -98,8 +98,8 @@ func (cat *Categories) UpdateCategoryGroup(req CategoryCreate, tenantid int) err
 		return ErrorCategoryName
 	}
 
-	var(
-	    category TblCategories
+	var (
+		category     TblCategories
 		categorySlug string
 	)
 
@@ -135,7 +135,7 @@ func (cat *Categories) UpdateCategoryGroup(req CategoryCreate, tenantid int) err
 }
 
 /*DeleteCategoryGroup*/
-func (cat *Categories) DeleteCategoryGroup(Categoryid int, modifiedby int, tenantid int) error {
+func (cat *Categories) DeleteCategoryGroup(Categoryid int, modifiedby int, tenantid string) error {
 
 	if AuthError := AuthandPermission(cat); AuthError != nil {
 
@@ -185,7 +185,7 @@ func (cat *Categories) DeleteCategoryGroup(Categoryid int, modifiedby int, tenan
 }
 
 /*DeleteCategoryGroup*/
-func (cat *Categories) MultiSelectDeleteCategoryGroup(Categoryids []int, modifiedby int, tenantid int) error {
+func (cat *Categories) MultiSelectDeleteCategoryGroup(Categoryids []int, modifiedby int, tenantid string) error {
 
 	var individualid []int
 
@@ -305,7 +305,7 @@ func (cat *Categories) MultiSelectDeleteCategoryGroup(Categoryids []int, modifie
 }
 
 // Delete Multiselect subcategory//
-func (cat *Categories) MultiselectSubCategoryDelete(Categoryids []int, modifiedby int, tenantid int) error {
+func (cat *Categories) MultiselectSubCategoryDelete(Categoryids []int, modifiedby int, tenantid string) error {
 
 	multiSubCategoryIds, multiSubRowIds, err1 := Categorymodel.MultiselectGetChannelCategoryids(&TblChannelCategorie{}, cat.DB)
 	if err1 != nil {

@@ -9,11 +9,11 @@ import (
 )
 
 // Check category name already exists
-func (cate *Categories) CheckCategroyGroupName(id int, name string,tenantid int) (bool, error) {
+func (cate *Categories) CheckCategroyGroupName(id int, name string, tenantid string) (bool, error) {
 
 	var category TblCategories
 
-	err := Categorymodel.CheckCategoryGroupName(category, id, name, cate.DB,tenantid)
+	err := Categorymodel.CheckCategoryGroupName(category, id, name, cate.DB, tenantid)
 
 	if err != nil {
 
@@ -25,15 +25,15 @@ func (cate *Categories) CheckCategroyGroupName(id int, name string,tenantid int)
 }
 
 /*Get All cateogry with parents and subcategory*/
-func (cate *Categories) AllCategoriesWithSubList(tenantid int) (arrangecategories []Arrangecategories, CategoryNames []string) {
+func (cate *Categories) AllCategoriesWithSubList(tenantid string) (arrangecategories []Arrangecategories, CategoryNames []string) {
 
-	getallparentcat, _ := Categorymodel.GetAllParentCategory(cate.DB,tenantid)
+	getallparentcat, _ := Categorymodel.GetAllParentCategory(cate.DB, tenantid)
 
 	var AllCategorieswithSubCategories []Arrangecategories
 
 	for _, Group := range getallparentcat {
 
-		GetData, _ := Categorymodel.GetCategoryTree(Group.Id, cate.DB,tenantid)
+		GetData, _ := Categorymodel.GetCategoryTree(Group.Id, cate.DB, tenantid)
 
 		var pid int
 
@@ -146,14 +146,14 @@ func (cate *Categories) AllCategoriesWithSubList(tenantid int) (arrangecategorie
 }
 
 // Check Sub category name already exists
-func (cate *Categories) CheckSubCategroyName(id []int, Currentcategoryid int, name string,tenantid int) (bool, error) {
+func (cate *Categories) CheckSubCategroyName(id []int, Currentcategoryid int, name string, tenantid string) (bool, error) {
 
 	if Autherr := AuthandPermission(cate); Autherr != nil {
 
 		return false, Autherr
 	}
 
-	_, err := Categorymodel.CheckSubCategoryName(id, Currentcategoryid, name, cate.DB,tenantid)
+	_, err := Categorymodel.CheckSubCategoryName(id, Currentcategoryid, name, cate.DB, tenantid)
 
 	if err != nil {
 
@@ -174,7 +174,7 @@ func contains(slice []int, item int) (check bool, index int) {
 	return false, -1
 }
 
-func (cate *Categories) DeleteChannelsubCategories(categoryid int, tenantid int) error {
+func (cate *Categories) DeleteChannelsubCategories(categoryid int, tenantid string) error {
 
 	subcategoryIds, subrowId, err1 := Categorymodel.GetChannelCategoryids(&TblChannelCategorie{}, cate.DB)
 	if err1 != nil {
@@ -192,7 +192,7 @@ func (cate *Categories) DeleteChannelsubCategories(categoryid int, tenantid int)
 		subCategoryIdInt[i] = intValues
 	}
 
-	err1 = Categorymodel.DeleteChannelCategoryids(&TblChannelCategorie{}, subCategoryIdInt, subrowId, categoryid, cate.DB,tenantid)
+	err1 = Categorymodel.DeleteChannelCategoryids(&TblChannelCategorie{}, subCategoryIdInt, subrowId, categoryid, cate.DB, tenantid)
 	if err1 != nil {
 		return err1
 	}
@@ -200,9 +200,9 @@ func (cate *Categories) DeleteChannelsubCategories(categoryid int, tenantid int)
 	return nil
 }
 
-func (cate *Categories) DeleteEntriessubCategories(categoryid int,tenantid int) error {
+func (cate *Categories) DeleteEntriessubCategories(categoryid int, tenantid string) error {
 
-	subEntryIds, subCategoryRowIds, subEntryRowIds, err2 := Categorymodel.GetEntryCategoryids(&TblChannelEntrie{}, categoryid, cate.DB,tenantid)
+	subEntryIds, subCategoryRowIds, subEntryRowIds, err2 := Categorymodel.GetEntryCategoryids(&TblChannelEntrie{}, categoryid, cate.DB, tenantid)
 	if err2 != nil {
 		return err2
 	}
@@ -253,7 +253,7 @@ func (cate *Categories) DeleteEntriessubCategories(categoryid int,tenantid int) 
 				newSlice = append(newSlice, subEntryIdInt[index+1:]...)
 				subEntriesIdInt[i] = newSlice
 				updatedSubEntryId = strings.Trim(strings.Join(strings.Fields(fmt.Sprint(newSlice)), ","), "[]")
-				err2 := Categorymodel.DeleteEntryCategoryids(&TblChannelEntrie{}, updatedSubEntryId, updatedSubRowId, cate.DB,tenantid)
+				err2 := Categorymodel.DeleteEntryCategoryids(&TblChannelEntrie{}, updatedSubEntryId, updatedSubRowId, cate.DB, tenantid)
 				if err2 != nil {
 					fmt.Println("err2:", err2)
 					return err2
@@ -266,7 +266,7 @@ func (cate *Categories) DeleteEntriessubCategories(categoryid int,tenantid int) 
 	return nil
 }
 
-func DeleteGroupchannelcategoryid(Categoryid int, DB *gorm.DB,tenantid int) error {
+func DeleteGroupchannelcategoryid(Categoryid int, DB *gorm.DB, tenantid string) error {
 
 	channelIds, rowIds, err1 := Categorymodel.GetChannelCategoryids(&TblChannelCategorie{}, DB)
 	if err1 != nil {
@@ -284,7 +284,7 @@ func DeleteGroupchannelcategoryid(Categoryid int, DB *gorm.DB,tenantid int) erro
 		channelIdInt[i] = intValues
 	}
 
-	err1 = Categorymodel.DeleteChannelCategoryids(&TblChannelCategorie{}, channelIdInt, rowIds, Categoryid, DB,tenantid)
+	err1 = Categorymodel.DeleteChannelCategoryids(&TblChannelCategorie{}, channelIdInt, rowIds, Categoryid, DB, tenantid)
 	if err1 != nil {
 		return err1
 	}
@@ -292,9 +292,9 @@ func DeleteGroupchannelcategoryid(Categoryid int, DB *gorm.DB,tenantid int) erro
 	return nil
 }
 
-func DeleteGroupEntriesCategoryid(Categoryid int, DB *gorm.DB,tenantid int) error {
+func DeleteGroupEntriesCategoryid(Categoryid int, DB *gorm.DB, tenantid string) error {
 
-	entryIds, categoryRowIds, entryRowIds, err2 := Categorymodel.GetEntryCategoryids(&TblChannelEntrie{}, Categoryid, DB,tenantid)
+	entryIds, categoryRowIds, entryRowIds, err2 := Categorymodel.GetEntryCategoryids(&TblChannelEntrie{}, Categoryid, DB, tenantid)
 	if err2 != nil {
 
 		return err2
@@ -345,7 +345,7 @@ func DeleteGroupEntriesCategoryid(Categoryid int, DB *gorm.DB,tenantid int) erro
 				newSlice = append(newSlice, entryId[index+1:]...)
 				entryIdInt[i] = newSlice
 				updatedEntryId = strings.Trim(strings.Join(strings.Fields(fmt.Sprint(newSlice)), ","), "[]")
-				err2 := Categorymodel.DeleteEntryCategoryids(&TblChannelEntrie{}, updatedEntryId, updateRowId, DB,tenantid)
+				err2 := Categorymodel.DeleteEntryCategoryids(&TblChannelEntrie{}, updatedEntryId, updateRowId, DB, tenantid)
 				if err2 != nil {
 					return err2
 				}
