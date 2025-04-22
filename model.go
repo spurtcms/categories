@@ -411,7 +411,7 @@ func (cate CategoryModel) CheckSubCategoryName(categoryid []int, currentid int, 
 
 	if len(categoryid) == 0 {
 
-		if err := DB.Table("tbl_categories").Where("LOWER(TRIM(category_name))=LOWER(TRIM(?)) and is_deleted=0 and  tenant_id = ?", name, tenantid).First(&category).Error; err != nil {
+		if err := DB.Table("tbl_categories").Where("LOWER(TRIM(category_name))=LOWER(TRIM(?)) and is_deleted=0 and  tenant_id = ? and parent_id=?", name, tenantid, currentid).First(&category).Error; err != nil {
 
 			return TblCategories{}, err
 		}
@@ -765,7 +765,7 @@ func (cat CategoryModel) FlexibleCategoryList(limit, offset, categoryGrpId, hier
 	}
 
 	res := `with recursive cat_tree AS (
-	select id, category_name, category_slug, description,image_path, parent_id, created_on,modified_on, modified_by,is_deleted,tenant_id` + selectHierarchyString + ` from tbl_categories where ` + categoryString + ` tenant_id = '` + convTenantId + `' union select tbl_categories.id, tbl_categories.category_name, tbl_categories.category_slug,tbl_categories.description, tbl_categories.image_path, tbl_categories.parent_id, tbl_categories.created_on,tbl_categories.modified_on,tbl_categories.modified_by,tbl_categories.is_deleted,tbl_categories.tenant_id` + fromHierarchyString + ` from tbl_categories join cat_tree on tbl_categories.parent_id = cat_tree.id where tbl_categories.tenant_id = '` + convTenantId +`' `+ hierarchyString + ` )`
+	select id, category_name, category_slug, description,image_path, parent_id, created_on,modified_on, modified_by,is_deleted,tenant_id` + selectHierarchyString + ` from tbl_categories where ` + categoryString + ` tenant_id = '` + convTenantId + `' union select tbl_categories.id, tbl_categories.category_name, tbl_categories.category_slug,tbl_categories.description, tbl_categories.image_path, tbl_categories.parent_id, tbl_categories.created_on,tbl_categories.modified_on,tbl_categories.modified_by,tbl_categories.is_deleted,tbl_categories.tenant_id` + fromHierarchyString + ` from tbl_categories join cat_tree on tbl_categories.parent_id = cat_tree.id where tbl_categories.tenant_id = '` + convTenantId + `' ` + hierarchyString + ` )`
 
 	if err := db.Debug().Raw(` ` + res + `select ct.* from cat_tree as ct ` + chanBasedCategories + EntryMappedCategories + ` where ct.is_deleted = 0  and ct.tenant_id ='` + convTenantId + `' ` + selectParentRemove + ` ` + exactLevel + ` ` + removeGroup + ` ` + createOnlyString + ` order by ct.id desc ` + limitString + offsetString).Find(&categories).Error; err != nil {
 
