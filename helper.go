@@ -58,6 +58,8 @@ func (cate *Categories) AllCategoriesWithSubList(tenantid string) (arrangecatego
 
 					indivi.Category = GetParent.CategoryName
 
+					indivi.CreatedOn = GetParent.CreatedOn
+
 					individualid = append(individualid, indivi)
 
 					if pid != 0 {
@@ -83,6 +85,8 @@ func (cate *Categories) AllCategoriesWithSubList(tenantid string) (arrangecatego
 
 				Sing.Category = addcat.Categories[i].Category
 
+				Sing.CreatedOn = addcat.Categories[i].CreatedOn
+
 				singlecat = append(singlecat, Sing)
 
 			}
@@ -92,6 +96,8 @@ func (cate *Categories) AllCategoriesWithSubList(tenantid string) (arrangecatego
 			newcate.Id = categories.Id
 
 			newcate.Category = categories.CategoryName
+
+			newcate.CreatedOn = categories.CreatedOn
 
 			addcat.Categories = append(addcat.Categories, newcate)
 

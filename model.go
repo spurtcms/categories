@@ -48,8 +48,9 @@ type Arrangecategories struct {
 }
 
 type CatgoriesOrd struct {
-	Id       int
-	Category string
+	Id        int
+	Category  string
+	CreatedOn time.Time
 }
 
 type CategoryCreate struct {
