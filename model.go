@@ -1,6 +1,7 @@
 package categories
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -28,6 +29,9 @@ type TblCategories struct {
 	Parent             []string `gorm:"-"`
 	ParentWithChild    []Result `gorm:"-"`
 	TenantId           string
+	SeoTitle           string
+	SeoDescription     string
+	SeoKeyword         string
 }
 
 type Filter struct {
@@ -54,15 +58,18 @@ type CatgoriesOrd struct {
 }
 
 type CategoryCreate struct {
-	Id           int
-	CategoryName string
-	CategorySlug string
-	Description  string
-	ImagePath    string
-	ParentId     int
-	TenantId     string
-	CreatedBy    int
-	ModifiedBy   int
+	Id             int
+	CategoryName   string
+	CategorySlug   string
+	Description    string
+	ImagePath      string
+	ParentId       int
+	TenantId       string
+	CreatedBy      int
+	ModifiedBy     int
+	SeoTitle       string
+	SeoDescription string
+	SeoKeyword     string
 }
 
 type CategoriesListReq struct {
@@ -177,14 +184,16 @@ func (categories CategoryModel) CreateCategory(category *TblCategories, DB *gorm
 // Update Children list
 func (categories CategoryModel) UpdateCategory(category *TblCategories, DB *gorm.DB, tenantid string) error {
 
+	fmt.Println("category::",category)
+
 	if category.ParentId == 0 && category.ImagePath == "" {
 
-		if err := DB.Table("tbl_categories").Where("id = ? and  tenant_id = ?", category.Id, tenantid).UpdateColumns(map[string]interface{}{"category_name": category.CategoryName, "category_slug": category.CategorySlug, "description": category.Description, "modified_by": category.ModifiedBy, "modified_on": category.ModifiedOn}).Error; err != nil {
+		if err := DB.Debug().Table("tbl_categories").Where("id = ? and  tenant_id = ?", category.Id, tenantid).UpdateColumns(map[string]interface{}{"category_name": category.CategoryName, "category_slug": category.CategorySlug, "description": category.Description, "modified_by": category.ModifiedBy, "modified_on": category.ModifiedOn, "seo_title": category.SeoTitle, "seo_description": category.SeoDescription, "seo_keyword": category.SeoKeyword}).Error; err != nil {
 
 			return err
 		}
 	} else {
-		if err := DB.Table("tbl_categories").Where("id = ? and  tenant_id = ?", category.Id, tenantid).UpdateColumns(map[string]interface{}{"category_name": category.CategoryName, "parent_id": category.ParentId, "category_slug": category.CategorySlug, "description": category.Description, "image_path": category.ImagePath, "modified_by": category.ModifiedBy, "modified_on": category.ModifiedOn}).Error; err != nil {
+		if err := DB.Debug().Table("tbl_categories").Where("id = ? and  tenant_id = ?", category.Id, tenantid).UpdateColumns(map[string]interface{}{"category_name": category.CategoryName, "parent_id": category.ParentId, "category_slug": category.CategorySlug, "description": category.Description, "image_path": category.ImagePath, "modified_by": category.ModifiedBy, "modified_on": category.ModifiedOn, "seo_title": category.SeoTitle, "seo_description": category.SeoDescription, "seo_keyword": category.SeoKeyword}).Error; err != nil {
 
 			return err
 		}

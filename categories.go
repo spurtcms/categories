@@ -280,6 +280,12 @@ func (cate *Categories) AddCategory(req CategoryCreate) error {
 
 	category.CreatedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
 
+	category.SeoTitle = req.SeoTitle
+
+	category.SeoDescription = req.SeoDescription
+
+	category.SeoKeyword = req.SeoKeyword
+
 	err := Categorymodel.CreateCategory(&category, cate.DB)
 
 	if err != nil {
@@ -321,6 +327,9 @@ func (cate *Categories) UpdateSubCategory(req CategoryCreate, tenantid string) e
 	category.Id = req.Id
 	category.ModifiedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
 	category.ModifiedBy = req.ModifiedBy
+	category.SeoTitle = req.SeoTitle
+	category.SeoDescription = req.SeoDescription
+	category.SeoKeyword = req.SeoKeyword
 
 	err := Categorymodel.UpdateCategory(&category, cate.DB, tenantid)
 	if err != nil {
