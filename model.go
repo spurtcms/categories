@@ -1,7 +1,6 @@
 package categories
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 
@@ -183,8 +182,6 @@ func (categories CategoryModel) CreateCategory(category *TblCategories, DB *gorm
 
 // Update Children list
 func (categories CategoryModel) UpdateCategory(category *TblCategories, DB *gorm.DB, tenantid string) error {
-
-	fmt.Println("category::",category)
 
 	if category.ParentId == 0 && category.ImagePath == "" {
 
@@ -788,4 +785,15 @@ func (cat CategoryModel) FlexibleCategoryList(limit, offset, categoryGrpId, hier
 	}
 
 	return categories, count, nil
+}
+
+// Get Childern list
+func (cate CategoryModel) GetCategoryDetailsBySlug(slug string, tenantid string, DB *gorm.DB) (category TblCategories, err error) {
+
+	if err := DB.Table("tbl_categories").Where("category_slug=? and  tenant_id = ?", slug, tenantid).First(&category).Error; err != nil {
+
+		return TblCategories{}, err
+	}
+	return category, nil
+
 }

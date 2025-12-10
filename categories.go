@@ -372,6 +372,25 @@ func (cate *Categories) DeleteSubCategory(categoryid int, modifiedby int, tenant
 }
 
 // Get Sub Category List
+func (cate *Categories) GetSubCategoryDetailsBySlug(categoryslug string, tenantid string) (categorys TblCategories, err error) {
+
+	if Autherr := AuthandPermission(cate); Autherr != nil {
+		return TblCategories{}, Autherr
+	}
+
+	category, err := Categorymodel.GetCategoryDetailsBySlug(categoryslug, tenantid, cate.DB)
+
+
+
+	if err != nil {
+		return TblCategories{}, err
+	}
+
+	return category, nil
+
+}
+
+// Get Sub Category List
 func (cate *Categories) GetSubCategoryDetails(categoryid int, tenantid string) (categorys TblCategories, err error) {
 
 	if Autherr := AuthandPermission(cate); Autherr != nil {
