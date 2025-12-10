@@ -376,7 +376,7 @@ func (cate CategoryModel) DeleteCategoryById(category *TblCategories, categoryId
 // Get Childern list
 func (cate CategoryModel) GetCategoryDetails(id int, tenantid string, DB *gorm.DB) (category TblCategories, err error) {
 
-	if err := DB.Table("tbl_categories").Where("id=? and  tenant_id = ?", id, tenantid).First(&category).Error; err != nil {
+	if err := DB.Table("tbl_categories").Where("id=? and is_deleted=0 and  tenant_id = ?", id, tenantid).First(&category).Error; err != nil {
 
 		return TblCategories{}, err
 	}
@@ -790,7 +790,7 @@ func (cat CategoryModel) FlexibleCategoryList(limit, offset, categoryGrpId, hier
 // Get Childern list
 func (cate CategoryModel) GetCategoryDetailsBySlug(slug string, tenantid string, DB *gorm.DB) (category TblCategories, err error) {
 
-	if err := DB.Table("tbl_categories").Where("category_slug=? and  tenant_id = ?", slug, tenantid).First(&category).Error; err != nil {
+	if err := DB.Table("tbl_categories").Where("category_slug=? and is_deleted=0 and  tenant_id = ?", slug, tenantid).First(&category).Error; err != nil {
 
 		return TblCategories{}, err
 	}
