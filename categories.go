@@ -258,7 +258,11 @@ func (cate *Categories) AddCategory(req CategoryCreate) error {
 
 	category.CategoryName = req.CategoryName
 
-	categorySlug = strings.ToLower(strings.ReplaceAll(req.CategoryName, " ", "-"))
+	if req.CategorySlug == "" {
+		categorySlug = strings.ToLower(strings.ReplaceAll(req.CategoryName, " ", "-"))
+	} else {
+		categorySlug = strings.ToLower(strings.ReplaceAll(req.CategorySlug, " ", "-"))
+	}
 
 	categorySlug = regexp.MustCompile(`[^a-zA-Z0-9]+`).ReplaceAllString(categorySlug, "-")
 
@@ -315,7 +319,11 @@ func (cate *Categories) UpdateSubCategory(req CategoryCreate, tenantid string) e
 		categorySlug string
 	)
 	category.CategoryName = req.CategoryName
-	categorySlug = strings.ToLower(strings.ReplaceAll(req.CategoryName, " ", "-"))
+	if req.CategorySlug == "" {
+		categorySlug = strings.ToLower(strings.ReplaceAll(req.CategoryName, " ", "-"))
+	} else {
+		categorySlug = strings.ToLower(strings.ReplaceAll(req.CategorySlug, " ", "-"))
+	}
 	categorySlug = regexp.MustCompile(`[^a-zA-Z0-9]+`).ReplaceAllString(categorySlug, "-")
 	categorySlug = regexp.MustCompile(`-+`).ReplaceAllString(categorySlug, "-")
 	categorySlug = strings.Trim(categorySlug, "-")
@@ -379,8 +387,6 @@ func (cate *Categories) GetSubCategoryDetailsBySlug(categoryslug string, tenanti
 	}
 
 	category, err := Categorymodel.GetCategoryDetailsBySlug(categoryslug, tenantid, cate.DB)
-
-
 
 	if err != nil {
 		return TblCategories{}, err
